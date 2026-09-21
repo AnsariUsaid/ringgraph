@@ -150,3 +150,46 @@ def homogeneity_null(
         f"null_max_{key}": float(arr.max()),
         "n_permutations": n_permutations,
     }
+
+
+def client_degree_distribution(
+    entity: pd.Series, uid: pd.Series, thresholds: tuple[int, ...] = (50, 100, 500, 1000, 5000)
+) -> dict[str, float | int | dict]:
+    """Distinct *clients* per entity value — the correct hub measure.
+
+    ``entity_degree_distribution`` counts transactions, but the projection the
+    plan runs community detection over is client-to-client (§Part 3). An entity
+    linking 40,000 transactions that belong to 40,000 separate clients is a hub;
+    one linking 40,000 transactions from 12 clients is a signal. Only the client
+    count distinguishes them, and the pruning band is applied to this.
+
+    The ``survival`` block answers the question that actually decides the band:
+    at a given ceiling, how many entity values remain, and what share of clients
+    still has at least one usable link? A ceiling that prunes the giant component
+    but strands most clients has not helped.
+    """
+    frame = pd.DataFrame({"entity": entity.to_numpy(), "uid": uid.to_numpy()}).dropna()
+    per_entity = frame.groupby("entity", observed=True)["uid"].nunique()
+    if per_entity.empty:
+        return {"n_values": 0}
+
+    n_clients_total = int(frame["uid"].nunique())
+    survival = {}
+    for ceiling in thresholds:
+        keep = per_entity[(per_entity >= 2) & (per_entity <= ceiling)]
+        linked = frame[frame["entity"].isin(keep.index)]
+        survival[str(ceiling)] = {
+            "n_entity_values": int(keep.size),
+            "client_coverage": float(linked["uid"].nunique() / n_clients_total),
+            "max_client_degree_kept": int(keep.max()) if keep.size else 0,
+        }
+
+    return {
+        "n_values": int(per_entity.size),
+        "n_clients_total": n_clients_total,
+        "max_client_degree": int(per_entity.max()),
+        "median_client_degree": float(per_entity.median()),
+        "p99_client_degree": float(per_entity.quantile(0.99)),
+        "share_degree_1": float((per_entity == 1).sum() / per_entity.size),
+        "survival": survival,
+    }

@@ -19,7 +19,7 @@ from typing import Any
 import pandas as pd
 
 from fds import schema
-from fds.entities import add_d1n
+from fds.entities import assign_d1n
 from fds.splits import day_from_transaction_dt, verify_day_range
 
 BASE_SCHEMA_VERSION = 1
@@ -67,7 +67,7 @@ def add_derived(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     out[schema.DAY] = day_from_transaction_dt(out[schema.TIME_RAW])
     verify_day_range(out[schema.DAY])
-    return add_d1n(out)
+    return assign_d1n(out)
 
 
 def identity_coverage(df: pd.DataFrame) -> dict[str, float]:

@@ -105,9 +105,17 @@ def add_d1n(df: pd.DataFrame) -> pd.DataFrame:
     temporal leak — worth stating because a recipe built on an aggregate (say,
     "most common email per card") would leak across the split boundary.
     """
-    out = df.copy()
-    out[D1N] = (out[DAY] - out["D1"]).astype("Int16")
-    return out
+    return assign_d1n(df.copy())
+
+
+def assign_d1n(df: pd.DataFrame) -> pd.DataFrame:
+    """In-place variant for callers that already hold a private copy.
+
+    ``add_derived`` copies a 436-column frame once; without this it would copy it
+    twice, roughly doubling both the wall time and the peak memory of ingest.
+    """
+    df[D1N] = (df[DAY] - df["D1"]).astype("Int16")
+    return df
 
 
 def _normalise(series: pd.Series, column: str) -> pd.Series:

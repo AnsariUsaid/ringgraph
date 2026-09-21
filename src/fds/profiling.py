@@ -45,7 +45,7 @@ def basic_profile(df: pd.DataFrame) -> dict[str, float | int]:
 def missingness(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     present = [c for c in columns if c in df.columns]
     miss = df[present].isna().mean().sort_values(ascending=False)
-    return miss.rename("missing_share").reset_index(names="column")
+    return miss.rename_axis("column").rename("missing_share").reset_index()
 
 
 def cardinality(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:

@@ -168,12 +168,18 @@ def client_degree_distribution(
     still has at least one usable link? A ceiling that prunes the giant component
     but strands most clients has not helped.
     """
+    # The population denominator must be counted BEFORE dropping rows with no
+    # value for this entity. Counting after makes each entity's coverage a share
+    # of its own sub-population, so card1 (present for nearly every client) and
+    # DeviceInfo (present for 29% of them) get silently different denominators
+    # and cannot be compared — which is exactly the error that made card1 look
+    # like a backbone.
+    n_clients_total = int(pd.Series(uid.to_numpy()).nunique())
+
     frame = pd.DataFrame({"entity": entity.to_numpy(), "uid": uid.to_numpy()}).dropna()
     per_entity = frame.groupby("entity", observed=True)["uid"].nunique()
     if per_entity.empty:
         return {"n_values": 0}
-
-    n_clients_total = int(frame["uid"].nunique())
     survival = {}
     for ceiling in thresholds:
         keep = per_entity[(per_entity >= 2) & (per_entity <= ceiling)]
@@ -187,6 +193,7 @@ def client_degree_distribution(
     return {
         "n_values": int(per_entity.size),
         "n_clients_total": n_clients_total,
+        "n_clients_with_value": int(frame["uid"].nunique()),
         "max_client_degree": int(per_entity.max()),
         "median_client_degree": float(per_entity.median()),
         "p99_client_degree": float(per_entity.quantile(0.99)),

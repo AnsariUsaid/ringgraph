@@ -11,14 +11,35 @@ returns 403 otherwise, regardless of whether the CLI is authenticated.
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
 import zipfile
+from pathlib import Path
 
 from fds import paths
 
 COMPETITION = "ieee-fraud-detection"
 WANTED = ["train_transaction.csv", "train_identity.csv"]
+
+
+def kaggle_executable() -> str:
+    """Locate the CLI belonging to *this* interpreter.
+
+    Running the script as ``.venv/bin/python scripts/00_download.py`` does not put
+    the venv's bin directory on PATH, so a bare ``"kaggle"`` resolves against the
+    user's shell PATH or, more often, not at all.
+    """
+    candidate = Path(sys.executable).parent / "kaggle"
+    if candidate.exists():
+        return str(candidate)
+    found = shutil.which("kaggle")
+    if found:
+        return found
+    sys.exit(
+        "the kaggle CLI was not found next to this interpreter or on PATH. "
+        "Install it into the venv with: .venv/bin/pip install kaggle"
+    )
 
 
 def fetch(filename: str) -> None:
@@ -30,7 +51,7 @@ def fetch(filename: str) -> None:
     print(f"  {filename}: downloading")
     result = subprocess.run(
         [
-            "kaggle",
+            kaggle_executable(),
             "competitions",
             "download",
             "-c",

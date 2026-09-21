@@ -85,3 +85,15 @@ def identity_coverage(df: pd.DataFrame) -> dict[str, float]:
         "deviceinfo_share": float(present.mean()),
         "fraud_rate": float(df[schema.TARGET].mean()),
     }
+
+
+def load_base(columns: list[str] | None = None) -> pd.DataFrame:
+    """Read the immutable base frame, refusing one built under an older contract."""
+    from fds import paths
+    from fds.artifacts import read_parquet
+
+    return read_parquet(
+        paths.BASE_TRANSACTIONS,
+        expect_schema_version=BASE_SCHEMA_VERSION,
+        columns=columns,
+    )

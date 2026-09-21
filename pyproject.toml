@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fds"
+version = "0.1.0"
+description = "Relational fraud intelligence — coordinated ring detection via graph structure"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = [
+    "E501",    # line length is handled by the formatter
+    "RUF012",  # mutable class attrs without ClassVar — noisy for dataclass registries
+    "RUF002",  # en/em dashes in docstrings are intentional prose punctuation
+    "RUF003",  # ditto, in comments
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "slow: touches real artefacts on disk; skipped unless --run-slow is given",
+]

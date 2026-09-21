@@ -1,0 +1,60 @@
+# ── Markdown ──────────────────────────────────────────────────────────────
+# Only README.md is tracked. Planning notes, agent discussions and generated
+# reports stay local.
+*.md
+!README.md
+
+# ── Python ────────────────────────────────────────────────────────────────
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.python-version
+
+# ── Data ──────────────────────────────────────────────────────────────────
+# The IEEE-CIS dataset and everything derived from it. Reproduced by scripts,
+# never committed.
+data/
+*.csv
+*.parquet
+*.zip
+*.feather
+
+# ── Reports / model artefacts ─────────────────────────────────────────────
+reports/
+models/*.txt
+models/*.pkl
+models/*.pt
+*.joblib
+
+# ── Neo4j ─────────────────────────────────────────────────────────────────
+neo4j/
+*.dump
+import/
+
+# ── Secrets ───────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+kaggle.json
+
+# ── Node / frontend ───────────────────────────────────────────────────────
+node_modules/
+web/dist/
+web/.vite/
+*.local
+npm-debug.log*
+yarn-error.log*
+
+# ── macOS / editors ───────────────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/
+*.swp

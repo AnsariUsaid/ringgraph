@@ -1,0 +1,33 @@
+# Local pipeline dependencies (Python 3.11, arm64 macOS).
+# M3 / GNN dependencies live in requirements-gnn.txt and are installed only
+# when that model is built — torch and torch_geometric are heavy and the
+# headline result (M1 vs M2) does not need them.
+
+# --- data ---
+pandas>=2.2,<3
+numpy>=1.26,<3
+pyarrow>=16.0
+
+# --- models ---
+scikit-learn>=1.5
+lightgbm>=4.5
+optuna>=3.6
+
+# --- graph ---
+neo4j>=5.20,<6
+
+# --- api ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.8
+pydantic-settings>=2.4
+
+# --- analysis output ---
+matplotlib>=3.9
+tqdm>=4.66
+
+# --- tooling ---
+kaggle>=1.6
+python-dotenv>=1.0
+pytest>=8.3
+ruff>=0.6

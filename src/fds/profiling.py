@@ -193,3 +193,74 @@ def client_degree_distribution(
         "share_degree_1": float((per_entity == 1).sum() / per_entity.size),
         "survival": survival,
     }
+
+
+def fraud_cooccurrence(
+    entity: pd.Series,
+    uid: pd.Series,
+    client_label: pd.Series,
+    *,
+    rng: np.random.Generator,
+    min_clients: int = 2,
+    max_clients: int = 1000,
+    n_permutations: int = 25,
+    thresholds: tuple[int, ...] = (2, 3),
+) -> dict[str, float | int]:
+    """Does this entity group fraud clients together beyond chance?
+
+    This is the measurement that decides whether an attribute can carry a
+    cross-client ring signal, and it is deliberately not label concordance.
+    Concordance scores an all-legitimate group exactly as highly as an all-fraud
+    one, and a ring detector cares only about the second.
+
+    The null permutes client labels **within this entity's own linked client
+    subpopulation**. Permuting across all clients instead would compare, say,
+    device-bearing clients against the global fraud rate — and since clients that
+    carry a device record are roughly five times fraudier to begin with, pure
+    selection would masquerade as edge structure. Holding the subpopulation rate
+    and the group size distribution fixed isolates the structure.
+
+    A significantly *negative* result is meaningful too: it means the attribute
+    disperses fraud clients across groups, making it worse than useless as a
+    linking edge.
+    """
+    pairs = pd.DataFrame({"entity": entity.to_numpy(), "uid": uid.to_numpy()}).dropna()
+    pairs = pairs.drop_duplicates()
+    sizes = pairs.groupby("entity", observed=True)["uid"].nunique()
+    keep = sizes[(sizes >= min_clients) & (sizes <= max_clients)].index
+    pairs = pairs[pairs["entity"].isin(keep)]
+    if pairs.empty:
+        return {"n_groups": 0}
+
+    sub_index = pairs["uid"].unique()
+    sub = client_label.loc[sub_index]
+    codes = pd.Categorical(pairs["entity"]).codes
+    n_groups = int(codes.max()) + 1
+
+    def counts(labels: pd.Series) -> dict[int, int]:
+        y = pairs["uid"].map(labels).to_numpy()
+        per_group = np.bincount(codes, weights=y, minlength=n_groups)
+        return {t: int((per_group >= t).sum()) for t in thresholds}
+
+    observed = counts(sub)
+    shuffled = sub.to_numpy().copy()
+    draws: dict[int, list[int]] = {t: [] for t in thresholds}
+    for _ in range(n_permutations):
+        rng.shuffle(shuffled)
+        for t, c in counts(pd.Series(shuffled, index=sub_index)).items():
+            draws[t].append(c)
+
+    result: dict[str, float | int] = {
+        "n_groups": len(keep),
+        "n_client_links": len(pairs),
+        "subpopulation_fraud_rate": float(sub.mean()),
+    }
+    for t in thresholds:
+        arr = np.asarray(draws[t], dtype=float)
+        sd = float(arr.std(ddof=1)) if arr.size > 1 else 0.0
+        result[f"groups_ge_{t}_fraud_observed"] = observed[t]
+        result[f"groups_ge_{t}_fraud_null_mean"] = float(arr.mean())
+        result[f"groups_ge_{t}_fraud_sd_away"] = (
+            (observed[t] - float(arr.mean())) / sd if sd else 0.0
+        )
+    return result

@@ -1,0 +1,37 @@
+# Default run configuration.
+#
+# Split boundaries are deliberately absent: they are code constants in
+# fds/splits.py and are not configurable (D-13).
+
+seed = 20260921
+
+[uid]
+recipe_name = "v1_card1_addr1_d1n"
+
+[graph]
+# Provisional. Both bounds are reported parameters and must be re-chosen from the
+# profiled degree distribution once the data is loaded (plan.md Part 3).
+hub_min_degree = 2
+hub_max_degree = 1000
+link_types = ["Device", "Address", "Card", "EmailDomain"]
+
+[snapshots]
+cadence_days = 14
+first_end_day = 28
+
+[model]
+kind = "lightgbm"
+num_boost_round = 2000
+early_stopping_rounds = 100
+
+[model.params]
+objective = "binary"
+metric = "auc"
+learning_rate = 0.03
+num_leaves = 64
+min_data_in_leaf = 100
+feature_fraction = 0.7
+bagging_fraction = 0.8
+bagging_freq = 1
+lambda_l2 = 1.0
+verbose = -1

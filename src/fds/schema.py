@@ -102,6 +102,14 @@ ENTITY_SOURCE_COLUMNS: dict[str, str] = {
 # component and a linear function of ``day``, so it reintroduces temporal
 # position through the back door. Raw ``D1`` (days since the card began) is a
 # genuine feature and stays.
+#
+# ``has_structure`` is denied for the same reason, measured rather than assumed:
+# it runs 0.34 in train against 0.51 in test, because expanding-window snapshots
+# mean later transactions are far more likely to have graph history. That makes
+# it partly a clock, and a model that leans on it meets a different distribution
+# at test time. The NaN pattern in the structural columns carries some of the
+# same information, which is exactly why the comparison must also be reported on
+# the subpopulation where every row has structure (D-38).
 FEATURE_DENY_LIST: frozenset[str] = frozenset(
     {
         KEY,
@@ -116,6 +124,7 @@ FEATURE_DENY_LIST: frozenset[str] = frozenset(
         "max_source_day",
         "n_source_txns",
         "source_txn_hash",
+        "has_structure",
     }
 )
 

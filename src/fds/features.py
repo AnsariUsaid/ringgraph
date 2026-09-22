@@ -67,3 +67,29 @@ def prediction_frame(df: pd.DataFrame, scores_by_split: dict[Split, pd.Series]) 
             )
         )
     return pd.concat(frames, ignore_index=True)
+
+
+def join_structural(df: pd.DataFrame, attach: pd.DataFrame) -> pd.DataFrame:
+    """Attach structural features to the base frame by TransactionID.
+
+    Only the feature columns and ``has_structure`` come across. The provenance
+    columns stay behind: they are on the deny-list, and carrying them into the
+    model matrix is exactly the accident the deny-list exists to catch.
+    """
+    from fds.snapshots import HAS_STRUCTURE
+    from fds.structural import FEATURE_PREFIX
+
+    keep = [schema.KEY, HAS_STRUCTURE] + [c for c in attach.columns if c.startswith(FEATURE_PREFIX)]
+    merged = df.merge(attach[keep], on=schema.KEY, how="left", validate="one_to_one")
+    merged[HAS_STRUCTURE] = merged[HAS_STRUCTURE].fillna(False).astype(bool)
+    return merged
+
+
+def structural_feature_columns(df: pd.DataFrame) -> list[str]:
+    from fds.snapshots import HAS_STRUCTURE
+    from fds.structural import FEATURE_PREFIX
+
+    # HAS_STRUCTURE is deliberately excluded: it is on the deny-list because its
+    # prevalence shifts with time under expanding-window snapshots.
+    assert HAS_STRUCTURE in schema.FEATURE_DENY_LIST
+    return [c for c in df.columns if c.startswith(FEATURE_PREFIX)]

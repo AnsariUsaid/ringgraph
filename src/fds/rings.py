@@ -171,6 +171,26 @@ def shared_attributes(
     return stacked[counts >= 2].reset_index(drop=True)
 
 
+def ring_edges(membership: pd.DataFrame, graph: nx.Graph) -> pd.DataFrame:
+    """Client-to-client links within each ring, for the graph canvas."""
+    lookup = dict(zip(membership[UID], membership["ring_id"], strict=True))
+    rows = []
+    for a, b, data in graph.edges(data=True):
+        ring_a, ring_b = lookup.get(a), lookup.get(b)
+        if ring_a is None or ring_a != ring_b:
+            continue  # cross-ring edges belong to the expansion view, not the ring
+        rows.append(
+            {
+                "ring_id": int(ring_a),
+                "source": a,
+                "target": b,
+                "weight": int(data["weight"]),
+                "attributes": data["attributes"],
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def ring_events(membership: pd.DataFrame, df: pd.DataFrame) -> pd.DataFrame:
     """Per-transaction rows for the temporal strip."""
     joined = df.merge(membership, on=UID)

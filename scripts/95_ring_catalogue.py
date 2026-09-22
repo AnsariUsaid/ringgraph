@@ -24,6 +24,7 @@ from fds.links import LinkParams
 from fds.rings import (
     detect_rings,
     member_detail,
+    ring_edges,
     ring_events,
     score_rings,
     shared_attributes,
@@ -78,6 +79,7 @@ def main() -> None:
     members = member_detail(membership, df)
     attributes = shared_attributes(membership, df, link_columns)
     events = ring_events(membership, df)
+    edges_out = ring_edges(membership, graph)
     print(f"scored in {(time.perf_counter() - started) / 60:.1f} min")
 
     paths.ensure(paths.RINGS_DIR)
@@ -87,6 +89,7 @@ def main() -> None:
         ("members", members),
         ("attributes", attributes),
         ("events", events),
+        ("edges", edges_out),
     ):
         write_parquet(
             frame,

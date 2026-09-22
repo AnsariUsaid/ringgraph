@@ -40,6 +40,7 @@ EDGES_DIR = DATA_ROOT / "edges"
 SNAPFEAT_DIR = DATA_ROOT / "snapfeat"
 ATTACH_DIR = DATA_ROOT / "attach"
 EXPORT_DIR = DATA_ROOT / "export"
+RINGS_DIR = DATA_ROOT / "rings"
 
 PREDS_DIR = PROJECT_ROOT / "preds"
 REPORTS_DIR = PROJECT_ROOT / "reports"

@@ -62,8 +62,18 @@ class GraphConfig:
     """
 
     hub_min_degree: int = 2
-    hub_max_degree: int = 1000
-    link_types: tuple[str, ...] = ("Device", "Address", "Card", "EmailDomain")
+    hub_max_degree: int = 50
+    min_edge_weight: int = 2
+    link_types: tuple[str, ...] = (
+        "DeviceInfo",
+        "id_31",
+        "id_33",
+        "id_30",
+        "id_17",
+        "id_19",
+        "id_20",
+        "id_13",
+    )
 
     def __post_init__(self) -> None:
         if self.hub_min_degree < 2:
@@ -73,6 +83,8 @@ class GraphConfig:
             )
         if self.hub_max_degree <= self.hub_min_degree:
             raise ValueError("hub_max_degree must exceed hub_min_degree")
+        if self.min_edge_weight < 1:
+            raise ValueError("min_edge_weight must be at least 1")
 
 
 @dataclass(frozen=True)

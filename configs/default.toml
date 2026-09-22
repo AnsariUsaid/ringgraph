@@ -9,11 +9,18 @@ seed = 20260921
 recipe_name = "v1_card1_addr1_d1n"
 
 [graph]
-# Provisional. Both bounds are reported parameters and must be re-chosen from the
-# profiled degree distribution once the data is loaded (plan.md Part 3).
+# Measured, not guessed. The ceiling and the weight floor were chosen from the
+# percolation sweep in reports/percolation.json: at a ceiling of 100 with no
+# weight floor the largest component holds 94% of linked clients, failing
+# plan.md's own <50% verification rule. At 50/2 it holds 14.5%.
+#
+# Linking attributes are the identity block, not the plan's original four.
+# card1/card2/addr1 are uid components, so linking on them re-imports the Trap A
+# labelling artefact (D-38); P_emaildomain is a hub by construction.
 hub_min_degree = 2
-hub_max_degree = 1000
-link_types = ["Device", "Address", "Card", "EmailDomain"]
+hub_max_degree = 50
+min_edge_weight = 2
+link_types = ["DeviceInfo", "id_31", "id_33", "id_30", "id_17", "id_19", "id_20", "id_13"]
 
 [snapshots]
 cadence_days = 14

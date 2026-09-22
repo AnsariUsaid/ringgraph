@@ -13,7 +13,7 @@ def test_overrides_return_a_new_config_and_leave_the_original_intact():
     cfg = RunConfig()
     changed = cfg.with_overrides({"graph.hub_max_degree": "500"})
     assert changed.graph.hub_max_degree == 500
-    assert cfg.graph.hub_max_degree == 1000
+    assert cfg.graph.hub_max_degree == 50
 
 
 def test_string_overrides_are_coerced_to_the_declared_type():
@@ -37,6 +37,7 @@ def test_run_key_changes_with_configuration_and_is_stable_otherwise():
         {"uid.recipe_name": "not_a_recipe"},
         {"graph.hub_min_degree": "1"},
         {"graph.hub_max_degree": "1"},
+        {"graph.min_edge_weight": "0"},
         {"snapshots.cadence_days": "0"},
         {"graph.nonexistent": "3"},
         {"nosuch.key": "3"},

@@ -29,6 +29,7 @@ data/
 
 # ── Reports / model artefacts ─────────────────────────────────────────────
 reports/
+preds/
 models/*.txt
 models/*.pkl
 models/*.pt

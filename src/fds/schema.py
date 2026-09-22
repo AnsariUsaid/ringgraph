@@ -98,7 +98,10 @@ ENTITY_SOURCE_COLUMNS: dict[str, str] = {
 # Bookkeeping and provenance columns that must never reach a model matrix.
 # ``day`` and ``TransactionDT`` encode position in the temporal split directly;
 # ``uid`` is the entity fraud is clustered on by construction (Trap A); the
-# snapshot columns are Trap B provenance.
+# snapshot columns are Trap B provenance. ``D1n`` is excluded too: it is a uid
+# component and a linear function of ``day``, so it reintroduces temporal
+# position through the back door. Raw ``D1`` (days since the card began) is a
+# genuine feature and stays.
 FEATURE_DENY_LIST: frozenset[str] = frozenset(
     {
         KEY,
@@ -106,6 +109,7 @@ FEATURE_DENY_LIST: frozenset[str] = frozenset(
         TIME_RAW,
         DAY,
         UID,
+        D1N,
         "split",
         "snapshot_id",
         "end_day_exclusive",

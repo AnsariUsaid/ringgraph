@@ -43,6 +43,37 @@ pip install -r requirements.txt
 
 All Python work runs inside `.venv`.
 
+## Running the demo
+
+Two processes. The API serves the precomputed ring catalogue from parquet, so
+Neo4j does not need to be running for the frontend to work.
+
+```bash
+.venv/bin/uvicorn api.main:app --port 8000
+```
+
+```bash
+npm run dev --prefix web
+```
+
+Then open http://localhost:5173.
+
+## Findings
+
+| | |
+|---|---|
+| Trap A | Confirmed. 96.6% of multi-transaction clients are label-pure against 85.1% expected by chance, so the thesis is restricted to cross-client structure. |
+| Usable links | Device attributes only. `card1`, `card2`, `addr1` and `P_emaildomain` all disperse fraud rather than concentrating it. |
+| Coordination | Real. Fraud-bearing components are 3-4x more temporally synchronised than fraud-free components of the same size. |
+| Rings found | 550 candidates, 112 holding two or more fraud clients, 12 entirely fraudulent against a 3.7% base rate. |
+| Predictive lift | **None.** Two independent structural feature families, five seeds each, every stratum inside the noise floor. |
+
+**Ring detection works; ring structure does not improve per-transaction
+prediction.** The negative result is the headline, and the machinery that makes
+it credible is the point: a temporal guard enforced as a test rather than a
+convention, a graph that never receives labels, and a measured training-noise
+floor that a single-run comparison would have hidden behind.
+
 ## Method notes
 
 Two failure modes are designed around rather than disclosed after the fact:

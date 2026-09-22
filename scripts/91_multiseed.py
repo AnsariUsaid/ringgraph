@@ -24,9 +24,11 @@ import pandas as pd
 from fds import paths, schema
 from fds.artifacts import read_parquet
 from fds.cli import base_parser, record_run, resolve
+from fds.community_features import PREFIX as COMMUNITY_PREFIX
 from fds.evaluation import evaluate
 from fds.features import (
     categorical_columns,
+    join_feature_table,
     join_structural,
     split_frames,
     structural_feature_columns,
@@ -43,6 +45,11 @@ def main() -> None:
     parser = base_parser(__doc__.splitlines()[0])
     parser.add_argument("--recipe", default=None)
     parser.add_argument("--seeds", type=int, nargs="*", default=SEEDS)
+    parser.add_argument(
+        "--community",
+        action="store_true",
+        help="also add Part 5 community-level features (density, burst, concentration)",
+    )
     args = parser.parse_args()
     cfg = resolve(args)
     recipe = args.recipe or cfg.uid.recipe_name
@@ -54,7 +61,16 @@ def main() -> None:
     df = join_structural(load_base(), attach)
     print(f"structural features from {attach_path}")
 
+    if args.community:
+        community_path = attach_path.with_name("attach_community.parquet")
+        if not community_path.exists():
+            raise SystemExit(f"{community_path} missing -- run scripts/82_community_features.py")
+        df = join_feature_table(df, read_parquet(community_path), COMMUNITY_PREFIX)
+        print(f"community features from {community_path}")
+
     structural = structural_feature_columns(df)
+    if args.community:
+        structural = structural + [c for c in df.columns if c.startswith(COMMUNITY_PREFIX)]
     m2_features = tabular_feature_columns(df)
     m1_features = [c for c in m2_features if c not in structural]
     schema.assert_no_denied_features(m2_features)
@@ -151,7 +167,8 @@ def main() -> None:
         call = "real" if abs(ratio) > 2.5 else "within noise"
         print(f"  {name:<16} {s['mean_diff']:+.4f} +/- {se:.4f} (se)  t~{ratio:+.1f}  {call}")
 
-    out = paths.report_path("multiseed_m1_vs_m2.json")
+    suffix = "_community" if args.community else ""
+    out = paths.report_path(f"multiseed_m1_vs_m2{suffix}.json")
     paths.ensure_parent(out)
     out.write_text(
         json.dumps(

@@ -93,3 +93,14 @@ def structural_feature_columns(df: pd.DataFrame) -> list[str]:
     # prevalence shifts with time under expanding-window snapshots.
     assert HAS_STRUCTURE in schema.FEATURE_DENY_LIST
     return [c for c in df.columns if c.startswith(FEATURE_PREFIX)]
+
+
+def join_feature_table(df: pd.DataFrame, attach: pd.DataFrame, prefix: str) -> pd.DataFrame:
+    """Join any prefixed feature family by TransactionID.
+
+    Provenance columns are left behind deliberately: they are on the deny-list,
+    and carrying them into a model matrix is the accident the deny-list exists
+    to catch.
+    """
+    keep = [schema.KEY] + [c for c in attach.columns if c.startswith(prefix)]
+    return df.merge(attach[keep], on=schema.KEY, how="left", validate="one_to_one")

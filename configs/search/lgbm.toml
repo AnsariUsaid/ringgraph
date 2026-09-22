@@ -1,0 +1,65 @@
+# LightGBM search space.
+#
+# Kept in its own file so the space itself is a reported parameter: "M1 is well
+# tuned" is only auditable if a reader can see what was searched. The identical
+# file is used for M2 (D-16) -- tuning M1 hard and M2 casually would understate
+# the lift, and the reverse would manufacture one.
+
+[fixed]
+objective = "binary"
+metric = "auc"
+verbose = -1
+max_bin = 255          # fixed so one binned Dataset can be reused across trials
+
+[space.learning_rate]
+# Floor raised from 0.01: at that rate early stopping rarely triggers inside the
+# round budget, so a trial runs to the cap and can outlast the whole search.
+type = "float"
+low = 0.03
+high = 0.15
+log = true
+
+[space.num_leaves]
+# Capped at 128: 256-leaf trees over 431 features were the other half of the
+# runaway trial.
+type = "int"
+low = 16
+high = 128
+
+[space.min_data_in_leaf]
+type = "int"
+low = 20
+high = 500
+log = true
+
+[space.feature_fraction]
+type = "float"
+low = 0.35
+high = 1.0
+
+[space.bagging_fraction]
+type = "float"
+low = 0.5
+high = 1.0
+
+[space.bagging_freq]
+type = "int"
+low = 1
+high = 7
+
+[space.lambda_l1]
+type = "float"
+low = 1e-8
+high = 10.0
+log = true
+
+[space.lambda_l2]
+type = "float"
+low = 1e-8
+high = 10.0
+log = true
+
+[space.min_gain_to_split]
+type = "float"
+low = 0.0
+high = 1.0

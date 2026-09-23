@@ -99,9 +99,15 @@ export interface ModelMetrics {
 }
 
 export interface AxisPerformance {
-  baseline: number;
+  client_fraud_rate: number;
+  k: number;
   n_rings: number;
-  axes: Record<string, { precision_at_50: number; lift: number }>;
+  /** Size-controlled: observed fraud clients over the number expected from
+   *  ring size alone, so a ranking that only sorts by size scores 1.0. */
+  axes: Record<
+    string,
+    { enrichment: number; observed_fraud_clients: number; expected_fraud_clients: number }
+  >;
 }
 
 export interface SweepPoint {

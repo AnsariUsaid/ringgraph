@@ -107,28 +107,35 @@ export function ModelComparison() {
 
       {axes.data && (
         <>
-          <div className="caps" style={{ marginBottom: 6 }}>
+          <div className="caps" style={{ marginBottom: 2 }}>
             Ring-ranking power by axis
+          </div>
+          <div style={{ fontSize: 11, color: "var(--fg-muted)", marginBottom: 6, lineHeight: 1.5 }}>
+            Fraud clients found in the top {axes.data.k} rings, over the number expected from ring
+            size alone. A ranking that only sorts by size scores 1.00×.
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 3, marginBottom: 14 }}>
             {Object.entries(axes.data.axes)
-              .sort((a, b) => b[1].lift - a[1].lift)
+              .sort((a, b) => b[1].enrichment - a[1].enrichment)
               .map(([axis, value]) => (
                 <div key={axis} style={{ display: "grid", gridTemplateColumns: "96px 1fr 42px", gap: 8, alignItems: "center", fontSize: 11 }}>
                   <span style={{ color: "var(--fg-secondary)" }}>{axis}</span>
                   <div style={{ position: "relative", height: 5, background: "var(--bg-sunken)", borderRadius: 3 }}>
-                    <div style={{ position: "absolute", left: `${100 / 3}%`, top: -2, width: 1, height: 9, background: "var(--border-strong)" }} />
+                    <div style={{ position: "absolute", left: "50%", top: -2, width: 1, height: 9, background: "var(--border-strong)" }} />
                     <div
                       style={{
-                        width: `${Math.min(100, (value.lift / 3) * 100)}%`,
+                        width: `${Math.min(100, (value.enrichment / 2) * 100)}%`,
                         height: "100%",
                         borderRadius: 3,
-                        background: value.lift >= 1 ? "var(--risk-2)" : "var(--risk-0)",
+                        background: value.enrichment >= 1 ? "var(--risk-2)" : "var(--risk-0)",
                       }}
                     />
                   </div>
-                  <span className="mono" style={{ textAlign: "right", color: value.lift >= 1 ? "var(--fg-primary)" : "var(--fg-muted)" }}>
-                    {value.lift.toFixed(2)}×
+                  <span
+                    className="mono"
+                    style={{ textAlign: "right", color: value.enrichment >= 1 ? "var(--fg-primary)" : "var(--fg-muted)" }}
+                  >
+                    {value.enrichment.toFixed(2)}×
                   </span>
                 </div>
               ))}

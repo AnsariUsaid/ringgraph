@@ -206,26 +206,50 @@
    side and nothing at all on a 320 device. Below this the wordmark drops to
    its glyph and the items tighten; the three labels are the part that has to
    survive. */
-@media (max-width: 720px) {
+/* The bar is now long rather than thick, so what it has to give up as the
+   viewport narrows is horizontal padding -- in three steps, because going
+   straight from 52px to 14px looks like a different component. */
+@media (max-width: 1080px) {
   .nav-item {
-    padding: 12px 18px !important;
-    font-size: 15px !important;
+    padding: 10px 34px !important;
   }
   .nav-shell {
-    padding: 8px 9px 8px 18px !important;
+    padding-left: 24px !important;
   }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 820px) {
+  .nav-item {
+    padding: 10px 20px !important;
+    font-size: 15px !important;
+  }
+  .nav-shell {
+    padding: 7px 8px 7px 18px !important;
+  }
+  .nav-brand {
+    padding-right: 18px !important;
+  }
+  .nav-divider {
+    margin-right: 10px !important;
+  }
+}
+
+@media (max-width: 560px) {
   .nav-wordmark {
     display: none;
   }
   .nav-item {
-    padding: 11px 14px !important;
+    padding: 10px 13px !important;
     font-size: 14px !important;
   }
   .nav-shell {
-    padding: 7px 8px 7px 14px !important;
+    padding: 6px 7px 6px 13px !important;
+  }
+  .nav-brand {
+    padding-right: 11px !important;
+  }
+  .nav-divider {
+    margin-right: 7px !important;
   }
 }
 

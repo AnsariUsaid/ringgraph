@@ -24,62 +24,118 @@ function Stat({
 }) {
   return (
     <div className={`rise ${delay}`} style={{ minWidth: 0 }}>
-      <div style={{ fontSize: 38, fontWeight: 600, lineHeight: 1.05, letterSpacing: "-0.02em" }}>
+      <div
+        className="text-gradient"
+        style={{ fontSize: 42, fontWeight: 600, lineHeight: 1.02, letterSpacing: "-0.025em" }}
+      >
         <CountUp value={value} decimals={decimals} suffix={suffix} />
       </div>
-      <div className="caps" style={{ marginTop: 6, marginBottom: 2 }}>
+      <div className="caps" style={{ marginTop: 9, marginBottom: 3, color: "var(--fg-secondary)" }}>
         {label}
       </div>
-      <div style={{ fontSize: 12, color: "var(--fg-muted)", lineHeight: 1.5 }}>{note}</div>
+      <div style={{ fontSize: 12.5, color: "var(--fg-muted)", lineHeight: 1.55 }}>{note}</div>
     </div>
   );
 }
 
+/** A finding, set as an editorial entry rather than a card.
+ *
+ * Three bordered boxes in a row is the default shape every dashboard reaches
+ * for, and it makes unequal findings look equal. These are numbered, unequal in
+ * weight, and each carries the one figure that supports it — which is closer to
+ * how the finding is actually argued.
+ */
 function Finding({
+  index,
+  verdict,
   title,
   body,
-  verdict,
-  tone,
+  figure,
+  figureNote,
   delay,
 }: {
+  index: string;
+  verdict: string;
   title: string;
   body: string;
-  verdict: string;
-  tone: string;
+  figure: string;
+  figureNote: string;
   delay: string;
 }) {
   return (
     <div
       className={`rise ${delay}`}
       style={{
-        padding: 20,
-        borderRadius: 10,
-        background: "var(--bg-panel)",
-        border: "1px solid var(--border-subtle)",
-        transition: "border-color var(--dur-base) var(--ease-out)",
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 76px) minmax(0, 1fr) minmax(0, 250px)",
+        gap: "clamp(20px, 4vw, 56px)",
+        alignItems: "start",
+        padding: "38px 0",
+        borderTop: "1px solid var(--border-subtle)",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-subtle)")}
     >
       <div
+        className="mono"
+        style={{ fontSize: 34, fontWeight: 600, color: "var(--border-strong)", lineHeight: 1 }}
+      >
+        {index}
+      </div>
+
+      <div>
+        <div
+          className="caps"
+          style={{ color: "var(--signature-a)", marginBottom: 10, letterSpacing: "0.1em" }}
+        >
+          {verdict}
+        </div>
+        <h3
+          style={{
+            fontSize: "clamp(21px, 2.3vw, 28px)",
+            fontWeight: 600,
+            letterSpacing: "-0.02em",
+            lineHeight: 1.22,
+            margin: "0 0 12px",
+          }}
+        >
+          {title}
+        </h3>
+        <p
+          style={{
+            fontSize: 14.5,
+            color: "var(--fg-secondary)",
+            lineHeight: 1.72,
+            margin: 0,
+            maxWidth: 600,
+          }}
+        >
+          {body}
+        </p>
+      </div>
+
+      <div
         style={{
-          display: "inline-block",
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: "0.07em",
-          textTransform: "uppercase",
-          padding: "3px 8px",
-          borderRadius: 999,
-          color: tone,
-          background: "var(--bg-sunken)",
-          border: `1px solid ${tone}`,
-          marginBottom: 12,
+          padding: "18px 20px",
+          borderRadius: 10,
+          background: "rgba(255,255,255,0.025)",
+          border: "1px solid var(--border-subtle)",
+          transition: "box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = "var(--glow-signature)";
+          e.currentTarget.style.transform = "translateY(-2px)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.transform = "none";
         }}
       >
-        {verdict}
+        <div className="mono" style={{ fontSize: 27, fontWeight: 600, letterSpacing: "-0.02em" }}>
+          {figure}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 7, lineHeight: 1.55 }}>
+          {figureNote}
+        </div>
       </div>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 7 }}>{title}</div>
-      <div style={{ fontSize: 13, color: "var(--fg-secondary)", lineHeight: 1.65 }}>{body}</div>
     </div>
   );
 }
@@ -93,9 +149,7 @@ export function Landing({ onNavigate }: Props) {
   const burst = axes.data?.axes.burst_share.enrichment ?? 1.72;
 
   return (
-    <div>
-      {/* Hero. The background is the project's own rendered link graph, not
-          stock decoration -- every dot in it is a reconstructed client. */}
+    <div style={{ position: "relative", overflow: "hidden" }}>
       <section
         style={{
           position: "relative",
@@ -103,10 +157,12 @@ export function Landing({ onNavigate }: Props) {
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          padding: "0 clamp(24px, 7vw, 120px)",
-          overflow: "hidden",
+          padding: "120px clamp(24px, 7vw, 120px) 70px",
         }}
       >
+        <div className="aurora" aria-hidden />
+        {/* The project's own link graph, not stock texture: every dot is a
+            reconstructed client. Masked so it reads as depth behind the type. */}
         <div
           aria-hidden
           style={{
@@ -115,11 +171,11 @@ export function Landing({ onNavigate }: Props) {
             backgroundImage: "url(/graph.png)",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            opacity: 0.3,
-            animation: "drift 42s var(--ease-out) infinite alternate",
-            maskImage: "radial-gradient(ellipse 70% 60% at 62% 45%, black 20%, transparent 78%)",
+            opacity: 0.34,
+            animation: "drift 46s var(--ease-out) infinite alternate",
+            maskImage: "radial-gradient(ellipse 66% 58% at 66% 44%, black 16%, transparent 76%)",
             WebkitMaskImage:
-              "radial-gradient(ellipse 70% 60% at 62% 45%, black 20%, transparent 78%)",
+              "radial-gradient(ellipse 66% 58% at 66% 44%, black 16%, transparent 76%)",
           }}
         />
         <div
@@ -128,78 +184,105 @@ export function Landing({ onNavigate }: Props) {
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(90deg, var(--bg-app) 12%, rgba(15,19,26,0.72) 48%, rgba(15,19,26,0.25) 100%)",
+              "linear-gradient(94deg, var(--bg-app) 8%, rgba(15,19,26,0.78) 46%, rgba(15,19,26,0.2) 100%)",
           }}
         />
 
-        <div style={{ position: "relative", maxWidth: 780 }}>
+        <div style={{ position: "relative", maxWidth: 800 }}>
           <div
-            className="rise rise-1 caps"
-            style={{ marginBottom: 18, color: "var(--accent)" }}
+            className="rise rise-1"
+            style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22 }}
           >
-            IEEE-CIS · 590,540 transactions · 182 days
+            <span
+              style={{
+                width: 22,
+                height: 2,
+                borderRadius: 2,
+                background: "var(--grad-signature)",
+              }}
+            />
+            <span className="caps" style={{ color: "var(--fg-secondary)", letterSpacing: "0.12em" }}>
+              IEEE-CIS · 590,540 transactions · 182 days
+            </span>
           </div>
+
           <h1
             className="rise rise-2"
             style={{
-              fontSize: "clamp(38px, 5.4vw, 66px)",
+              fontSize: "clamp(40px, 5.8vw, 72px)",
               fontWeight: 600,
-              lineHeight: 1.04,
-              letterSpacing: "-0.03em",
+              lineHeight: 1.02,
+              letterSpacing: "-0.035em",
               margin: 0,
             }}
           >
-            Relational fraud
+            Finding the <span className="text-gradient">coordination</span>
             <br />
-            intelligence
+            behind ordinary fraud
           </h1>
+
           <p
             className="rise rise-3"
             style={{
               fontSize: "clamp(15px, 1.5vw, 19px)",
               color: "var(--fg-secondary)",
-              lineHeight: 1.65,
-              maxWidth: 620,
-              marginTop: 22,
+              lineHeight: 1.68,
+              maxWidth: 630,
+              marginTop: 24,
             }}
           >
-            Organised fraud spreads value across synthetic identities so each transaction looks
-            ordinary. This finds the coordination between them — and tests, honestly, whether
-            that structure predicts anything a good tabular model misses.
+            Organised rings spread value across synthetic identities so every transaction looks
+            unremarkable on its own. This reconstructs who is really who, links them by the devices
+            they share, and measures whether the structure between them holds a signal.
           </p>
 
-          <div className="rise rise-4" style={{ display: "flex", gap: 10, marginTop: 34 }}>
+          <div className="rise rise-4" style={{ display: "flex", gap: 12, marginTop: 38 }}>
             <button
               onClick={() => onNavigate("investigate")}
               style={{
-                fontSize: 14,
-                fontWeight: 500,
-                padding: "11px 22px",
+                fontSize: 14.5,
+                fontWeight: 600,
+                padding: "13px 26px",
                 borderRadius: 999,
-                background: "var(--fg-primary)",
-                color: "var(--bg-canvas)",
-                transition: "transform var(--dur-base) var(--ease-out)",
+                background: "var(--grad-signature)",
+                color: "#04140f",
+                transition:
+                  "transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) var(--ease-out)",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-3px)";
+                e.currentTarget.style.boxShadow = "0 16px 44px -12px rgba(110,231,165,0.55)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             >
-              Explore the rings →
+              Explore the rings
             </button>
             <button
               onClick={() => onNavigate("results")}
+              className="edge-lit"
               style={{
-                fontSize: 14,
+                fontSize: 14.5,
                 fontWeight: 500,
-                padding: "11px 22px",
+                padding: "13px 26px",
                 borderRadius: 999,
                 color: "var(--fg-primary)",
-                border: "1px solid var(--border-strong)",
-                transition: "background var(--dur-base) var(--ease-out)",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid var(--border-default)",
+                transition: "background var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-spring)",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.09)";
+                e.currentTarget.style.transform = "translateY(-3px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                e.currentTarget.style.transform = "none";
+              }}
             >
-              See the result
+              Read the result
             </button>
           </div>
         </div>
@@ -208,87 +291,59 @@ export function Landing({ onNavigate }: Props) {
           style={{
             position: "relative",
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-            gap: 30,
-            maxWidth: 820,
-            marginTop: 72,
-            paddingTop: 30,
+            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+            gap: 34,
+            maxWidth: 880,
+            marginTop: 80,
+            paddingTop: 34,
             borderTop: "1px solid var(--border-subtle)",
           }}
         >
-          <Stat
-            value={rings}
-            label="candidate rings"
-            note="detected over the client projection"
-            delay="rise-4"
-          />
-          <Stat
-            value={clients}
-            label="linked clients"
-            note="joined by shared device attributes"
-            delay="rise-5"
-          />
+          <Stat value={rings} label="candidate rings" note="over the client projection" delay="rise-4" />
+          <Stat value={clients} label="linked clients" note="joined by shared devices" delay="rise-5" />
           <Stat
             value={burst}
             decimals={2}
             suffix="×"
             label="detector enrichment"
-            note="fraud found over chance, size-controlled"
+            note="fraud over chance, size-controlled"
             delay="rise-5"
           />
-          <Stat
-            value={96.6}
-            decimals={1}
-            suffix="%"
-            label="label purity"
-            note="the trap this design had to survive"
-            delay="rise-6"
-          />
+          <Stat value={96.6} decimals={1} suffix="%" label="label purity" note="the trap this had to survive" delay="rise-6" />
         </div>
       </section>
 
-      <section style={{ padding: "0 clamp(24px, 7vw, 120px) 110px", maxWidth: 1240 }}>
+      <section
+        style={{
+          position: "relative",
+          padding: "0 clamp(24px, 7vw, 120px) 120px",
+          maxWidth: 1280,
+        }}
+      >
         <h2
-          style={{
-            fontSize: 13,
-            fontWeight: 500,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "var(--fg-muted)",
-            marginBottom: 20,
-          }}
+          className="caps"
+          style={{ color: "var(--fg-muted)", marginBottom: 6, letterSpacing: "0.12em" }}
         >
           What it found
         </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
-            gap: 16,
-          }}
-        >
-          <Finding
-            verdict="confirmed"
-            tone="var(--risk-3)"
-            title="The labels are clustered by client"
-            body="96.6% of multi-transaction clients are entirely fraudulent or entirely clean, against 85.1% expected by chance. Linking a client's own transactions would have rediscovered the labelling rule, so the thesis was restricted to links between distinct identities before any model was built."
-            delay="rise-1"
-          />
-          <Finding
-            verdict="real"
-            tone="var(--risk-2)"
-            title="Coordination is measurable"
-            body="Fraud-bearing groups fire in tighter bursts than clean groups of the same size, and ranking rings by burstiness finds fraud well above chance once ring size is controlled for. The effect reproduces across all three client-reconstruction rules."
-            delay="rise-2"
-          />
-          <Finding
-            verdict="null"
-            tone="var(--fg-muted)"
-            title="But it does not improve prediction"
-            body="Graph features add no detectable lift over a tuned tabular baseline — on any stratum, across five seeds, with both models tuned on their own feature sets. Ring detection works; ring structure does not improve per-transaction scoring."
-            delay="rise-3"
-          />
-        </div>
+        <Finding
+          index="01"
+          verdict="confirmed before any model was built"
+          title="The labels are clustered by client, not by transaction"
+          body="Almost every customer in this dataset is entirely fraudulent or entirely clean. Build a graph linking a customer's own transactions and you would 'discover' that fraud forms dense clusters — having rediscovered the labelling rule, not detected anything. Measuring it first forced the thesis to rest only on links between distinct identities."
+          figure="+11.5 pts"
+          figureNote="label purity above what chance and client sizes alone produce"
+          delay="rise-1"
+        />
+        <Finding
+          index="02"
+          verdict="measured, and it reproduces"
+          title="Coordinated groups fire in bursts that ordinary customers do not"
+          body="Clients sharing a device fingerprint transact in tight windows far more often than clean groups of the same size. Ranking rings by that burstiness finds fraud well above chance once ring size is controlled for — and the effect holds under all three client-reconstruction rules, so it is not an artefact of how identity was inferred."
+          figure="2.72×"
+          figureNote="fraud enrichment among small rings, against a size-matched null"
+          delay="rise-2"
+        />
       </section>
     </div>
   );

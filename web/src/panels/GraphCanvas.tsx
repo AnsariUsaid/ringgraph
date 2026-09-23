@@ -49,7 +49,7 @@ export function GraphCanvas() {
         {
           selector: "node",
           style: {
-            "background-color": "var(--node-other)",
+            "background-color": "#6b7ea3",
             width: 18,
             height: 18,
             "border-width": 0,
@@ -58,26 +58,26 @@ export function GraphCanvas() {
         },
         {
           selector: 'node[kind = "Client"]',
-          style: { "background-color": "#7aa7ff", width: 22, height: 22, shape: "ellipse" },
+          style: { "background-color": "#7cc4ff", width: 22, height: 22, shape: "ellipse" },
         },
         {
           selector: 'node[kind = "Client"][?is_fraud]',
           style: {
-            "background-color": "#f04e4e",
+            "background-color": "#ff4d6d",
             "border-width": 2,
-            "border-color": "#ffd0d0",
+            "border-color": "#ffc9d4",
             width: 26,
             height: 26,
           },
         },
-        { selector: 'node[kind = "DeviceInfo"]', style: { "background-color": "#c77dff", shape: "round-rectangle" } },
-        { selector: 'node[kind = "id_33"]', style: { "background-color": "#4fd1c5", shape: "diamond" } },
-        { selector: 'node[kind = "id_30"]', style: { "background-color": "#f2b544", shape: "round-triangle" } },
-        { selector: 'node[kind = "id_31"]', style: { "background-color": "#6fcf97", shape: "hexagon" } },
+        { selector: 'node[kind = "DeviceInfo"]', style: { "background-color": "#c792ea", shape: "round-rectangle" } },
+        { selector: 'node[kind = "id_33"]', style: { "background-color": "#3ddce8", shape: "diamond" } },
+        { selector: 'node[kind = "id_30"]', style: { "background-color": "#ffc46b", shape: "round-triangle" } },
+        { selector: 'node[kind = "id_31"]', style: { "background-color": "#a6e34d", shape: "hexagon" } },
         {
           selector: "edge",
           style: {
-            "line-color": "#3a4453",
+            "line-color": "#2b3a5c",
             width: 1,
             opacity: 0.45,
             "curve-style": "straight",
@@ -85,7 +85,7 @@ export function GraphCanvas() {
         },
         {
           selector: 'edge[kind = "LINKED"]',
-          style: { "line-color": "#4c9aff", width: "mapData(weight, 1, 6, 1, 4)", opacity: 0.55 },
+          style: { "line-color": "#3ddce8", width: "mapData(weight, 1, 6, 1, 4)", opacity: 0.55 },
         },
         // Labels are the most expensive thing in Cytoscape's renderer, so they
         // appear only where they are being read.
@@ -94,7 +94,7 @@ export function GraphCanvas() {
           style: {
             label: "data(label)",
             "font-size": 9,
-            color: "#9ba7b8",
+            color: "#97a7c2",
             "text-margin-y": -4,
             "min-zoomed-font-size": 8,
           },
@@ -102,9 +102,9 @@ export function GraphCanvas() {
         { selector: ".dimmed", style: { opacity: 0.12 } },
         {
           selector: ".picked",
-          style: { "border-width": 3, "border-color": "#7fb8ff", "overlay-opacity": 0 },
+          style: { "border-width": 3, "border-color": "#c8f751", "overlay-opacity": 0 },
         },
-        { selector: ".hovered", style: { "border-width": 3, "border-color": "#7fb8ff" } },
+        { selector: ".hovered", style: { "border-width": 3, "border-color": "#7ff0f8" } },
       ],
     });
 

@@ -38,6 +38,11 @@ def test_shift_null_destroys_alignment_but_keeps_burstiness():
     groups.append((np.asarray(times), np.asarray(codes)))
     result = synchrony_test(groups, delta=HOUR, span=SPAN, rng=rng, n_permutations=20)
     assert result["observed"] == 0
+    # The null must actually run: shifting four clients into a shared window
+    # occasionally produces coincidences, so a null of exactly zero across 20
+    # draws would mean the shuffling never happened.
+    assert result["null_sd"] >= 0.0
+    assert result["n_transactions"] == 16
 
 
 def test_coordinated_ring_exceeds_its_own_null():

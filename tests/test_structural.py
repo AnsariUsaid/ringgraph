@@ -26,17 +26,21 @@ def base() -> pd.DataFrame:
     Before day 80 they are unconnected, so a correct pipeline reports degree 0
     for any transaction earlier than that. A leak reports 1.
     """
+    # isFraud is present on purpose: the pipeline must drop it, and a fixture
+    # without it made the "no label reaches the features" test unfalsifiable.
     rows = [
-        (1, "A", 10, "laptop-a"),
-        (2, "B", 20, "laptop-b"),
-        (3, "A", 70, "laptop-a"),
-        (4, "A", 80, "shared-box"),
-        (5, "B", 85, "shared-box"),
-        (6, "A", 150, "shared-box"),
-        (7, "B", 150, "shared-box"),
-        (8, "C", 30, "laptop-c"),
+        (1, "A", 10, "laptop-a", 1),
+        (2, "B", 20, "laptop-b", 0),
+        (3, "A", 70, "laptop-a", 1),
+        (4, "A", 80, "shared-box", 1),
+        (5, "B", 85, "shared-box", 0),
+        (6, "A", 150, "shared-box", 1),
+        (7, "B", 150, "shared-box", 0),
+        (8, "C", 30, "laptop-c", 0),
     ]
-    return pd.DataFrame(rows, columns=[KEY, UID, DAY, "DeviceInfo"]).astype({DAY: "int16"})
+    return pd.DataFrame(rows, columns=[KEY, UID, DAY, "DeviceInfo", "isFraud"]).astype(
+        {DAY: "int16"}
+    )
 
 
 def _specs() -> list[SnapshotSpec]:
@@ -91,5 +95,6 @@ class TestTrapBThroughTheRealPipeline:
         table = snapshot_feature_table(
             base, _specs(), link_columns=LINKS, params=PARAMS, progress=False
         )
+        assert "isFraud" in base.columns, "fixture must carry a label to be dropped"
         assert "isFraud" not in table.columns
         assert not any("fraud" in c.lower() for c in table.columns)

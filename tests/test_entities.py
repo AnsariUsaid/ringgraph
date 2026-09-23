@@ -75,10 +75,28 @@ def test_email_normalisation_groups_case_and_whitespace_variants(frame):
     assert uid.iloc[0] == uid.iloc[1]
 
 
-def test_stricter_recipes_never_merge_clients(frame):
-    loose = build_uid(frame, UID_RECIPES["v1_card1_addr1_d1n"]).nunique()
-    strict = build_uid(frame, UID_RECIPES["v3_plus_email"]).nunique()
-    assert strict >= loose, "adding key components cannot reduce the client count"
+def test_stricter_recipe_actually_splits_a_client_the_looser_one_merges():
+    """Behavioural, not tautological.
+
+    `strict >= loose` follows from the key construction and cannot fail for any
+    fixture. What is worth testing is that the extra component does real work:
+    two rows identical on card/addr/D1n but differing in email must be one
+    client under v1 and two under v3.
+    """
+    df = add_d1n(
+        pd.DataFrame(
+            {
+                DAY: pd.Series([10, 10], dtype="int16"),
+                "D1": [10.0, 10.0],
+                "card1": [1001, 1001],
+                "card2": [500.0, 500.0],
+                "addr1": [325.0, 325.0],
+                "P_emaildomain": ["gmail.com", "yahoo.com"],
+            }
+        )
+    )
+    assert build_uid(df, UID_RECIPES["v1_card1_addr1_d1n"]).nunique() == 1
+    assert build_uid(df, UID_RECIPES["v3_plus_email"]).nunique() == 2
 
 
 def test_null_policies_differ_only_where_components_are_missing():

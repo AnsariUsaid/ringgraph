@@ -28,14 +28,18 @@ def fpr_label(target_fpr: float) -> str:
 def tpr_at_fpr(y_true: np.ndarray, y_score: np.ndarray, target_fpr: float) -> dict[str, float]:
     """True-positive rate at a fixed false-positive rate, with its threshold."""
     fpr, tpr, thresholds = roc_curve(y_true, y_score)
-    # sklearn prepends an infinite threshold; it breaks interpolation.
-    fpr, tpr, thresholds = fpr[1:], tpr[1:], thresholds[1:]
-    if fpr.size == 0:
+    if fpr.size <= 1:
         return {"tpr": float("nan"), "threshold": float("nan")}
-    return {
-        "tpr": float(np.interp(target_fpr, fpr, tpr)),
-        "threshold": float(np.interp(target_fpr, fpr, thresholds)),
-    }
+
+    # sklearn prepends an infinite threshold, which cannot be interpolated --
+    # but dropping that row also drops the (0, 0) origin, and np.interp clamps
+    # below its smallest x. When the smallest achievable non-zero FPR exceeds
+    # the target, clamping silently reports the TPR at a *looser* FPR than was
+    # asked for, which is optimistic in exactly the direction that flatters a
+    # result. Keep the origin for the TPR curve; strip it only for thresholds.
+    tpr_value = float(np.interp(target_fpr, fpr, tpr))
+    threshold = float(np.interp(target_fpr, fpr[1:], thresholds[1:]))
+    return {"tpr": tpr_value, "threshold": threshold}
 
 
 def evaluate(y_true: np.ndarray, y_score: np.ndarray) -> dict[str, float]:

@@ -83,12 +83,25 @@ def main() -> None:
             attribute_columns=link_columns,
             n_permutations=10,
         )
+
+        # Size-controlled enrichment, not precision@50 over base rate. The
+        # latter is dominated by ring size and rose under shuffled labels; it
+        # was retired in D-47 and this script was written before that.
+        def enrichment(by: str, frame: pd.DataFrame = rings) -> float:
+            if frame.empty:
+                return float("nan")
+            rate = float(frame["n_fraud_clients"].sum() / frame["n_clients"].sum())
+            top = frame.sort_values(by, ascending=False, kind="stable").head(50)
+            expected = float(top["n_clients"].sum()) * rate
+            return float(top["n_fraud_clients"].sum() / expected) if expected else float("nan")
+
         fraudy = rings["n_fraud_clients"] >= 2
         baseline = float(fraudy.mean()) if len(rings) else float("nan")
-        top50 = float(fraudy[rings.sort_values("composite", ascending=False).index[:50]].mean())
-        top50_size = float(
-            fraudy[rings.sort_values("n_clients", ascending=False).index[:50]].mean()
-        )
+        client_rate = float(rings["n_fraud_clients"].sum() / rings["n_clients"].sum())
+        # Ranking by size is carried almost entirely by a handful of very large
+        # rings, so report it with those excluded as well -- that is what
+        # separates a size gradient from a few outliers.
+        small = rings[rings["n_clients"] <= 15]
 
         homogeneity = label_homogeneity(df[schema.UID], df[schema.TARGET], min_size=MIN_SIZE)
         null = homogeneity_null(
@@ -109,10 +122,12 @@ def main() -> None:
             "n_rings": len(rings),
             "n_fraud_rings": int(fraudy.sum()),
             "ring_fraud_baseline": baseline,
-            "precision_at_50_composite": top50,
-            "lift_composite": top50 / baseline if baseline else float("nan"),
-            "precision_at_50_size": top50_size,
-            "lift_size": top50_size / baseline if baseline else float("nan"),
+            "client_fraud_rate": client_rate,
+            "enrichment_burst": enrichment("burst_share"),
+            "enrichment_burst_small_rings": enrichment("burst_share", small),
+            "enrichment_size": enrichment("n_clients"),
+            "enrichment_size_small_rings": enrichment("n_clients", small),
+            "enrichment_composite": enrichment("composite"),
             "trap_a_excess_purity": excess,
         }
         results[recipe] = entry
@@ -131,8 +146,10 @@ def main() -> None:
         "largest_component_share",
         "n_rings",
         "ring_fraud_baseline",
-        "lift_composite",
-        "lift_size",
+        "enrichment_burst",
+        "enrichment_burst_small_rings",
+        "enrichment_size",
+        "enrichment_size_small_rings",
         "trap_a_excess_purity",
     ):
         row = f"{metric:<28}"
@@ -146,7 +163,9 @@ def main() -> None:
     out.write_text(json.dumps(results, indent=2) + "\n")
     print(f"\nwrote {out}")
     record_run(
-        cfg, script="96_uid_sensitivity", metrics={r: v["lift_size"] for r, v in results.items()}
+        cfg,
+        script="96_uid_sensitivity",
+        metrics={r: v["enrichment_burst"] for r, v in results.items()},
     )
 
 

@@ -28,7 +28,15 @@ AXES = ("density", "synchrony", "concentration", "tightness")
 def detect_rings(
     df: pd.DataFrame, *, link_columns: tuple[str, ...], params: LinkParams, seed: int = 42
 ) -> tuple[pd.DataFrame, nx.Graph]:
-    """Leiden-style community detection over the client projection."""
+    """Louvain community detection over the client projection.
+
+    Louvain, not Leiden, despite fds.communities preferring Leiden: this path is
+    pure networkx so the whole catalogue builds without a database. The caveat
+    that motivates Leiden there applies here too — Louvain can return internally
+    disconnected communities, so a "ring" need not have all members mutually
+    connected. The density axis is where that would show, and density turns out
+    to be degenerate at these ring sizes anyway (D-47).
+    """
     edges = build_links(df, UID, columns=link_columns, params=params)
     graph = nx.Graph()
     for a, b, weight, attributes in zip(
@@ -63,7 +71,14 @@ def score_rings(
     across axes by construction.
     """
     span = float(df["TransactionDT"].max() - df["TransactionDT"].min())
-    by_client = df.groupby(UID, observed=True)
+
+    # Both of these were previously recomputed inside the loop, once per ring:
+    # a full groupby over ~590k rows and a full boolean scan, 550 times over.
+    client_fraud = df.groupby(UID, observed=True)[TARGET].max()
+    events_by_ring = {
+        ring_id: block
+        for ring_id, block in df.merge(membership, on=UID).groupby("ring_id", observed=True)
+    }
 
     rows = []
     for ring_id, block in membership.groupby("ring_id"):
@@ -72,7 +87,9 @@ def score_rings(
         subgraph = graph.subgraph(members)
         possible = size * (size - 1) / 2
 
-        events = df[df[UID].isin(members)]
+        events = events_by_ring.get(ring_id)
+        if events is None or events.empty:
+            continue
         times = events["TransactionDT"].to_numpy(dtype=float)
         codes = pd.factorize(events[UID])[0]
 
@@ -80,23 +97,28 @@ def score_rings(
         null = float(
             np.mean([shift_null(times, codes, 3600.0, span, rng) for _ in range(n_permutations)])
         )
-        synchrony = float(observed / null) if null > 0 else float(observed > 0)
+        # Add-one smoothing rather than branching on null == 0. The raw ratio
+        # was degenerate: at ring sizes of 3-10 the shift null is frequently
+        # exactly zero, and the old fallback `float(observed > 0)` silently
+        # substituted a boolean for a ratio in 75% of rings, then percentile-
+        # ranked it alongside genuine ratios. Smoothing keeps the statistic
+        # monotone in `observed` and on one scale throughout (D-47).
+        synchrony = float((observed + 1.0) / (null + 1.0))
 
         # Part 5 asks "how few distinct devices serve how many distinct clients",
         # so this must count attribute *values*, not attribute types. Counting
         # types made the axis degenerate: with a weight-1 link floor most rings
         # share exactly one type, so concentration collapsed to ring size and
         # the composite was ranking on size twice.
-        member_rows = events[list(attribute_columns)] if attribute_columns else None
+        # `events[list(attribute_columns)]` used to sit here purely to be tested
+        # for None, and raised KeyError on any configured column missing from
+        # the frame — defeating the very guard the loop below implements.
         distinct_attributes = 0
-        if member_rows is not None:
-            for column in attribute_columns:
-                counts = (
-                    events.groupby(column, observed=True)[UID].nunique()
-                    if column in events.columns
-                    else pd.Series(dtype=int)
-                )
-                distinct_attributes += int((counts >= 2).sum())
+        for column in attribute_columns:
+            if column not in events.columns:
+                continue
+            counts = events.groupby(column, observed=True)[UID].nunique()
+            distinct_attributes += int((counts >= 2).sum())
         amounts = events[AMOUNT].to_numpy(dtype=float)
         cv = float(np.std(amounts) / np.mean(amounts)) if np.mean(amounts) > 0 else 0.0
 
@@ -117,7 +139,7 @@ def score_rings(
                 "mean_edge_weight": float(
                     np.mean([d["weight"] for _, _, d in subgraph.edges(data=True)] or [0])
                 ),
-                "n_fraud_clients": int(by_client[TARGET].max().reindex(members).fillna(0).sum()),
+                "n_fraud_clients": int(client_fraud.reindex(members).fillna(0).sum()),
             }
         )
 

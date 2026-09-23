@@ -80,7 +80,9 @@
   --lift-2: 0 2px 4px rgba(31, 27, 15, 0.06), 0 8px 24px -8px rgba(31, 27, 15, 0.14);
   --lift-3: 0 4px 10px rgba(31, 27, 15, 0.07), 0 20px 48px -16px rgba(31, 27, 15, 0.2);
 
-  --nav-height: 54px;
+  /* The pill's own height plus clearance. Every page that sits under the fixed
+     nav pads by this, so the bar can be resized in one place. */
+  --nav-height: 84px;
   --ease-spring: cubic-bezier(0.34, 1.32, 0.42, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }

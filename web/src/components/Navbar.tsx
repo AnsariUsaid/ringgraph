@@ -1,34 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, ROUTES, useRouter, type Route } from "../router";
+import { Mark } from "./Mark";
 
 const ITEMS: { to: Route; label: string; hint: string }[] = [
   { to: "/", label: "Overview", hint: "What the system looks for" },
   { to: "/explore", label: "Explore", hint: "550 candidate rings" },
   { to: "/results", label: "Results", hint: "Did structure help?" },
 ];
-
-/** The brand mark is the risk signature glyph at 4 bars -- the same shape that
- *  appears on every ring row. A logo that is a piece of the data language,
- *  rather than a generic icon, is free identity. */
-function Mark() {
-  const heights = [7, 13, 9, 16];
-  return (
-    <svg width="20" height="18" viewBox="0 0 20 18" aria-hidden style={{ display: "block", flexShrink: 0 }}>
-      {heights.map((h, i) => (
-        <rect
-          key={i}
-          x={i * 5}
-          y={17 - h}
-          width={3.2}
-          height={h}
-          rx={1}
-          fill={i === 3 ? "var(--risk-4)" : "var(--accent)"}
-          opacity={i === 3 ? 1 : 0.35 + i * 0.22}
-        />
-      ))}
-    </svg>
-  );
-}
 
 /** Floating pill navigation.
  *
@@ -55,6 +33,12 @@ export function Navbar() {
   const [ripple, setRipple] = useState<{ id: number; x: number; y: number } | null>(null);
 
   const target = hovered ?? active;
+  // The indicator is dark ink when it sits on the committed route and a light
+  // wash when it is previewing a hover. Labels may only invert under the dark
+  // one -- previously "active" alone decided it, so hovering a *different*
+  // item slid the dark pill away and left the active label white on paper,
+  // invisible until the pointer came back.
+  const previewing = hovered !== null && hovered !== active;
 
   // Layout effect, not effect: measuring after paint would show the indicator
   // at its old position for one frame on every route change.
@@ -104,7 +88,7 @@ export function Navbar() {
       aria-label="Primary"
       style={{
         position: "fixed",
-        top: scrolled ? 12 : 20,
+        top: scrolled ? 14 : 24,
         left: "50%",
         zIndex: 60,
         transform: "translateX(-50%)",
@@ -116,8 +100,8 @@ export function Navbar() {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 4,
-          padding: "5px 6px 5px 14px",
+          gap: 6,
+          padding: "10px 11px 10px 24px",
           borderRadius: 999,
           border: "1px solid var(--rule)",
           // Glass, but tinted toward the paper rather than white, so the bar
@@ -132,15 +116,15 @@ export function Navbar() {
         <Link
           to="/"
           aria-label="Relational Fraud Intelligence, overview"
-          style={{ display: "flex", alignItems: "center", gap: 9, paddingRight: 12 }}
+          style={{ display: "flex", alignItems: "center", gap: 12, paddingRight: 18 }}
         >
-          <Mark />
+          <Mark size={30} />
           <span
             className="nav-wordmark"
             style={{
-              fontSize: 13,
+              fontSize: 19,
               fontWeight: 600,
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.03em",
               whiteSpace: "nowrap",
             }}
           >
@@ -148,9 +132,9 @@ export function Navbar() {
           </span>
         </Link>
 
-        <span style={{ width: 1, height: 20, background: "var(--rule)", marginRight: 4 }} />
+        <span style={{ width: 1, height: 32, background: "var(--rule)", marginRight: 8 }} />
 
-        <div ref={listRef} style={{ position: "relative", display: "flex", gap: 2 }} onMouseLeave={() => setHovered(null)}>
+        <div ref={listRef} style={{ position: "relative", display: "flex", gap: 4 }} onMouseLeave={() => setHovered(null)}>
           {box && (
             <span
               aria-hidden
@@ -161,7 +145,7 @@ export function Navbar() {
                 bottom: 0,
                 width: box.w,
                 borderRadius: 999,
-                background: hovered && hovered !== active ? "var(--accent-wash)" : "var(--ink)",
+                background: previewing ? "var(--accent-wash)" : "var(--ink)",
                 // Translating a fixed-origin element rather than animating
                 // `left` keeps this on the compositor.
                 transform: `translate3d(${box.x}px, 0, 0)`,
@@ -179,10 +163,10 @@ export function Navbar() {
               onAnimationEnd={() => setRipple(null)}
               style={{
                 position: "absolute",
-                left: ripple.x - 40,
-                top: ripple.y - 40,
-                width: 80,
-                height: 80,
+                left: ripple.x - 62,
+                top: ripple.y - 62,
+                width: 124,
+                height: 124,
                 borderRadius: "50%",
                 background: "var(--accent)",
                 animation: "ripple 620ms var(--ease-out) forwards",
@@ -193,6 +177,7 @@ export function Navbar() {
 
           {ITEMS.map((item) => {
             const isActive = item.to === active;
+            const inverted = !previewing && item.to === target;
             return (
               <Link
                 key={item.to}
@@ -213,15 +198,23 @@ export function Navbar() {
                 }}
                 style={{
                   position: "relative",
-                  padding: "7px 15px",
+                  padding: "15px 26px",
                   borderRadius: 999,
-                  fontSize: 13,
+                  fontSize: 16.5,
                   fontWeight: 500,
                   whiteSpace: "nowrap",
-                  // The label inverts only for the committed route. On a hover
-                  // preview the indicator is a wash, so the label stays ink and
-                  // never flickers to white and back.
-                  color: isActive ? "var(--paper-raised)" : "var(--ink-2)",
+                  // Three states, all legible: the committed route inverts to
+                  // paper under the dark pill; while a hover is previewing, the
+                  // committed route keeps the accent ("you are here") and the
+                  // previewed one goes full ink on its wash, so the two are
+                  // never the same colour at the same time.
+                  color: inverted
+                    ? "var(--paper-raised)"
+                    : isActive
+                      ? "var(--accent)"
+                      : item.to === hovered
+                        ? "var(--ink)"
+                        : "var(--ink-2)",
                   transition: "color 220ms linear",
                 }}
               >

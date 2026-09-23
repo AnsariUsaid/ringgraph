@@ -18,17 +18,23 @@ const queryClient = new QueryClient({
   },
 });
 
-function Panel({ children, right = false }: { children: React.ReactNode; right?: boolean }) {
+type View = "investigate" | "results";
+
+const VIEWS: { key: View; label: string; hint: string }[] = [
+  { key: "investigate", label: "Investigate", hint: "explore detected rings" },
+  { key: "results", label: "Results", hint: "does structure add lift?" },
+];
+
+function Panel({ children, side }: { children: React.ReactNode; side: "left" | "right" }) {
   return (
     <div
       style={{
         background: "var(--bg-panel)",
-        borderLeft: right ? "1px solid var(--border-subtle)" : undefined,
-        borderRight: right ? undefined : "1px solid var(--border-subtle)",
+        [side === "left" ? "borderRight" : "borderLeft"]: "1px solid var(--border-subtle)",
         display: "flex",
         flexDirection: "column",
         // Without this a flex/grid child refuses to shrink and grows the panel
-        // off-screen. It is the single most reliable layout bug in this shape.
+        // off-screen. The most reliable layout bug in this shape.
         minHeight: 0,
         minWidth: 0,
       }}
@@ -38,15 +44,28 @@ function Panel({ children, right = false }: { children: React.ReactNode; right?:
   );
 }
 
-function Workbench() {
-  // Opens on burst share, not on plan.md's composite. The composite is still
-  // computed, still shown and still one click away -- its definition is
-  // untouched. But it ranks at 1.28x against burst share's 1.69x, because two
-  // of its four axes are anti-predictive and one is 82% ties, so defaulting to
-  // it would open the tool on a ranking we have measured as the weaker one
-  // (D-47, D-48).
+/** Ring exploration: list drives canvas drives evidence. */
+function Investigate() {
   const [sort, setSort] = useState("burst_share");
-  const [tab, setTab] = useState<"evidence" | "models">("evidence");
+  return (
+    <div
+      style={{ display: "grid", gridTemplateColumns: "320px 1fr 400px", flex: 1, minHeight: 0 }}
+    >
+      <Panel side="left">
+        <RingList sort={sort} onSortChange={setSort} />
+      </Panel>
+      <div style={{ minWidth: 0, minHeight: 0 }}>
+        <GraphCanvas />
+      </div>
+      <Panel side="right">
+        <EvidencePanel />
+      </Panel>
+    </div>
+  );
+}
+
+function Workbench() {
+  const [view, setView] = useState<View>("investigate");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", minHeight: 0 }}>
@@ -66,45 +85,40 @@ function Workbench() {
         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
           <span style={{ fontSize: 15, fontWeight: 600 }}>Relational Fraud Intelligence</span>
           <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>
-            coordinated ring detection via shared-device structure
+            {VIEWS.find((v) => v.key === view)?.hint}
           </span>
         </div>
-        <div style={{ display: "flex", gap: 2 }}>
-          {(["evidence", "models"] as const).map((key) => (
+        {/* Two views rather than a tab inside the evidence panel: the model
+            comparison shares no state with the graph and needs the full width
+            for its intervals. */}
+        <nav style={{ display: "flex", gap: 2 }}>
+          {VIEWS.map((option) => (
             <button
-              key={key}
-              onClick={() => setTab(key)}
+              key={option.key}
+              onClick={() => setView(option.key)}
+              aria-current={view === option.key}
               style={{
-                fontSize: 11,
-                padding: "4px 10px",
+                fontSize: 12,
+                padding: "5px 12px",
                 borderRadius: "var(--radius-control)",
-                color: tab === key ? "var(--accent)" : "var(--fg-muted)",
-                background: tab === key ? "var(--accent-muted)" : "transparent",
-                border: `1px solid ${tab === key ? "var(--accent)" : "transparent"}`,
+                color: view === option.key ? "var(--accent)" : "var(--fg-secondary)",
+                background: view === option.key ? "var(--accent-muted)" : "transparent",
+                border: `1px solid ${view === option.key ? "var(--accent)" : "transparent"}`,
               }}
             >
-              {key === "evidence" ? "Evidence" : "Model comparison"}
+              {option.label}
             </button>
           ))}
-        </div>
+        </nav>
       </header>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "320px 1fr 400px",
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
-        <Panel>
-          <RingList sort={sort} onSortChange={setSort} />
-        </Panel>
-        <div style={{ minWidth: 0, minHeight: 0 }}>
-          <GraphCanvas />
+      {view === "investigate" ? (
+        <Investigate />
+      ) : (
+        <div className="scroll" style={{ flex: 1, minHeight: 0 }}>
+          <ModelComparison />
         </div>
-        <Panel right>{tab === "evidence" ? <EvidencePanel /> : <ModelComparison />}</Panel>
-      </div>
+      )}
     </div>
   );
 }

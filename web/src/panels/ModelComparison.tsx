@@ -37,11 +37,28 @@ export function ModelComparison() {
   }
 
   return (
-    <div className="scroll" style={{ height: "100%", padding: 12 }}>
-      <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 2 }}>Does structure add lift?</div>
-      <div style={{ fontSize: 11, color: "var(--fg-muted)", marginBottom: 12 }}>
-        TPR at 1% false-positive rate · 5 seeds per model · paired on training randomness
+    <div style={{ padding: "24px 28px", maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>
+        Does graph structure add predictive lift?
       </div>
+      <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 6, maxWidth: 680, lineHeight: 1.6 }}>
+        M1 is a tuned LightGBM on tabular features including the device columns. M2 adds
+        snapshot-based graph structure. Both are tuned on their own feature sets with the same
+        search space and budget, and trained across five seeds that they share — so a difference
+        reflects the features, not the randomness.
+      </div>
+      <div style={{ fontSize: 11, color: "var(--fg-muted)", marginBottom: 20 }}>
+        TPR at 1% false-positive rate · test period, days 151–181 · paired on training seed
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1.1fr) minmax(0, 1fr)",
+          gap: 36,
+          alignItems: "start",
+        }}
+      >
+        <div>
 
       {models.data && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
@@ -117,6 +134,8 @@ export function ModelComparison() {
         </div>
       )}
 
+        </div>
+        <div>
       {axes.isError && (
         <div style={{ fontSize: 11, color: "var(--fg-muted)", marginBottom: 14 }}>
           Axis metrics unavailable.
@@ -199,6 +218,8 @@ export function ModelComparison() {
           </div>
         </>
       )}
+        </div>
+      </div>
     </div>
   );
 }

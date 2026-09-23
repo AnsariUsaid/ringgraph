@@ -82,7 +82,7 @@
 
   /* The pill's own height plus clearance. Every page that sits under the fixed
      nav pads by this, so the bar can be resized in one place. */
-  --nav-height: 84px;
+  --nav-height: 64px;
   --ease-spring: cubic-bezier(0.34, 1.32, 0.42, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }

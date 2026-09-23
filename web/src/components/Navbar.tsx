@@ -100,8 +100,8 @@ export function Navbar() {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 6,
-          padding: "10px 11px 10px 24px",
+          gap: 10,
+          padding: "7px 9px 7px 30px",
           borderRadius: 999,
           border: "1px solid var(--rule)",
           // Glass, but tinted toward the paper rather than white, so the bar
@@ -116,13 +116,14 @@ export function Navbar() {
         <Link
           to="/"
           aria-label="Relational Fraud Intelligence, overview"
-          style={{ display: "flex", alignItems: "center", gap: 12, paddingRight: 18 }}
+          className="nav-brand"
+          style={{ display: "flex", alignItems: "center", gap: 11, paddingRight: 34 }}
         >
-          <Mark size={30} />
+          <Mark size={26} />
           <span
             className="nav-wordmark"
             style={{
-              fontSize: 19,
+              fontSize: 17,
               fontWeight: 600,
               letterSpacing: "-0.03em",
               whiteSpace: "nowrap",
@@ -132,9 +133,9 @@ export function Navbar() {
           </span>
         </Link>
 
-        <span style={{ width: 1, height: 32, background: "var(--rule)", marginRight: 8 }} />
+        <span className="nav-divider" style={{ width: 1, height: 24, background: "var(--rule)", marginRight: 18 }} />
 
-        <div ref={listRef} style={{ position: "relative", display: "flex", gap: 4 }} onMouseLeave={() => setHovered(null)}>
+        <div ref={listRef} style={{ position: "relative", display: "flex", gap: 6 }} onMouseLeave={() => setHovered(null)}>
           {box && (
             <span
               aria-hidden
@@ -163,10 +164,10 @@ export function Navbar() {
               onAnimationEnd={() => setRipple(null)}
               style={{
                 position: "absolute",
-                left: ripple.x - 62,
-                top: ripple.y - 62,
-                width: 124,
-                height: 124,
+                left: ripple.x - 48,
+                top: ripple.y - 48,
+                width: 96,
+                height: 96,
                 borderRadius: "50%",
                 background: "var(--accent)",
                 animation: "ripple 620ms var(--ease-out) forwards",
@@ -198,9 +199,9 @@ export function Navbar() {
                 }}
                 style={{
                   position: "relative",
-                  padding: "15px 26px",
+                  padding: "10px 52px",
                   borderRadius: 999,
-                  fontSize: 16.5,
+                  fontSize: 15.5,
                   fontWeight: 500,
                   whiteSpace: "nowrap",
                   // Three states, all legible: the committed route inverts to

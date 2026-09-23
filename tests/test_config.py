@@ -13,7 +13,7 @@ def test_overrides_return_a_new_config_and_leave_the_original_intact():
     cfg = RunConfig()
     changed = cfg.with_overrides({"graph.hub_max_degree": "500"})
     assert changed.graph.hub_max_degree == 500
-    assert cfg.graph.hub_max_degree == 50
+    assert cfg.graph.hub_max_degree == 10
 
 
 def test_string_overrides_are_coerced_to_the_declared_type():
@@ -63,3 +63,20 @@ def test_default_toml_loads_and_matches_code_defaults():
 def test_malformed_override_is_reported():
     with pytest.raises(ValueError, match="malformed"):
         parse_set_overrides(["no_equals_sign"])
+
+
+def test_dataclass_defaults_match_the_shipped_config():
+    """The fallback a [model]-only config inherits.
+
+    configs/tuned/*.toml carry only a [model] section, so every other value
+    comes from the dataclass defaults rather than from configs/default.toml.
+    When those two drifted apart, `--config configs/tuned/m1.toml` silently
+    selected a different graph than the repo documents.
+    """
+    coded, shipped = RunConfig(), load_config("configs/default.toml")
+    assert coded.graph.hub_min_degree == shipped.graph.hub_min_degree
+    assert coded.graph.hub_max_degree == shipped.graph.hub_max_degree
+    assert coded.graph.min_edge_weight == shipped.graph.min_edge_weight
+    assert coded.graph.link_types == shipped.graph.link_types
+    assert coded.snapshots.cadence_days == shipped.snapshots.cadence_days
+    assert coded.snapshots.first_end_day == shipped.snapshots.first_end_day

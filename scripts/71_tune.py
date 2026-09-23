@@ -16,8 +16,14 @@ import json
 import time
 
 from fds import paths
+from fds.artifacts import read_parquet
 from fds.cli import base_parser, record_run, resolve
-from fds.features import categorical_columns, split_frames, tabular_feature_columns
+from fds.features import (
+    categorical_columns,
+    join_structural,
+    split_frames,
+    tabular_feature_columns,
+)
 from fds.ingest import load_base
 from fds.tuning import TUNING_FPR, load_search_space, tune, winning_params
 
@@ -28,11 +34,30 @@ def main() -> None:
     parser.add_argument("--trials", type=int, default=40)
     parser.add_argument("--timeout", type=int, default=2700, help="seconds; Optuna stops after")
     parser.add_argument("--search", default=str(paths.CONFIGS_DIR / "search" / "lgbm.toml"))
+    parser.add_argument(
+        "--structural",
+        action="store_true",
+        help="tune on M2's feature set (tabular + structural), not M1's",
+    )
     args = parser.parse_args()
     cfg = resolve(args)
 
     search = load_search_space(args.search)
     df = load_base()
+    if args.structural:
+        # Without this the script tuned the tabular matrix whatever --name said,
+        # so `--name m2` only changed the output filename. Tuning parity (D-16)
+        # was asserted in the docstrings and unreachable in the code.
+        attach_path = paths.attach_path(
+            cfg.uid.recipe_name,
+            cfg.graph.hub_min_degree,
+            cfg.graph.hub_max_degree,
+            cfg.snapshots.cadence_days,
+        )
+        if not attach_path.exists():
+            raise SystemExit(f"{attach_path} missing -- run scripts/80_snapshot_features.py")
+        df = join_structural(df, read_parquet(attach_path))
+        print(f"tuning on the structural feature set from {attach_path}")
     features = tabular_feature_columns(df)
     categorical = categorical_columns(df, features)
     frames = split_frames(df, features)

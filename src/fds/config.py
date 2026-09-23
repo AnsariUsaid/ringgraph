@@ -63,8 +63,8 @@ class GraphConfig:
     """
 
     hub_min_degree: int = 2
-    hub_max_degree: int = 50
-    min_edge_weight: int = 2
+    hub_max_degree: int = 10
+    min_edge_weight: int = 1
     # Single source of truth lives in fds.links. Duplicating the tuple here is
     # what let the gate scripts drift away from the pipeline.
     link_types: tuple[str, ...] = IDENTITY_LINK_COLUMNS
@@ -85,13 +85,19 @@ class GraphConfig:
 class SnapshotConfig:
     """Expanding-window graph snapshots (plan.md Trap B).
 
-    ``cadence_days`` of 14 gives 13 snapshots over the 182-day span. Cadence 7
-    doubles the number of GDS runs on a growing client projection, so it is a
-    deliberate cost decision rather than a free tightening.
+    Cadence 7 gives 24 snapshots over the 182-day span. It is chosen over 14
+    because a client only receives structure if it transacted strictly before a
+    boundary that is itself at or before the target day, so a coarse cadence
+    strands short-lived clients: 39.5% of rows get a snapshot at cadence 7
+    against 35.4% at 14.
+
+    These defaults must match configs/default.toml. A config file carrying only
+    a [model] section inherits *these* values, not that file's, so a divergence
+    silently selects a different graph.
     """
 
-    cadence_days: int = 14
-    first_end_day: int = 28  # no snapshot before there is enough history to be meaningful
+    cadence_days: int = 7
+    first_end_day: int = 14  # no snapshot before there is enough history to be meaningful
 
     def __post_init__(self) -> None:
         if self.cadence_days < 1:

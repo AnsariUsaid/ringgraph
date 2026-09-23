@@ -25,6 +25,7 @@ from fds import paths, schema
 from fds.artifacts import read_parquet
 from fds.cli import base_parser, record_run, resolve
 from fds.community_features import PREFIX as COMMUNITY_PREFIX
+from fds.config import load_config
 from fds.evaluation import evaluate
 from fds.features import (
     categorical_columns,
@@ -49,6 +50,12 @@ def main() -> None:
         "--community",
         action="store_true",
         help="also add Part 5 community-level features (density, burst, concentration)",
+    )
+    parser.add_argument(
+        "--m2-config",
+        default=None,
+        help="M2's own tuned config; omit to run both models on M1's parameters, "
+        "which biases toward the null and is announced at run time",
     )
     args = parser.parse_args()
     cfg = resolve(args)
@@ -93,19 +100,37 @@ def main() -> None:
     for name, mask in strata.items():
         print(f"  {name:<16} {int(mask.sum()):>7,} rows  {int(y_test[mask].sum()):>5,} fraud")
 
-    common = {
-        "params": cfg.model.params,
-        "num_boost_round": cfg.model.num_boost_round,
-        "early_stopping_rounds": cfg.model.early_stopping_rounds,
-        "seeds": args.seeds,
-    }
+    # Each model may carry its own tuned parameters. Running both on M1's
+    # optimum biases toward the null, which is the direction that flatters this
+    # project's headline -- so it is allowed but announced (D-16).
+    m2_cfg = load_config(args.m2_config) if args.m2_config else cfg
+    if args.m2_config:
+        print(f"M2 uses its own tuned parameters from {args.m2_config}")
+    else:
+        print(
+            "M2 runs on M1's parameters -- no separate M2 tuning supplied. This "
+            "biases toward the null and must be stated alongside the result."
+        )
+
     print("\ntraining M1 across seeds")
     m1_runs = train_seed_sweep(
-        frames_m1, features=m1_features, categorical=categorical_columns(df, m1_features), **common
+        frames_m1,
+        features=m1_features,
+        categorical=categorical_columns(df, m1_features),
+        params=cfg.model.params,
+        num_boost_round=cfg.model.num_boost_round,
+        early_stopping_rounds=cfg.model.early_stopping_rounds,
+        seeds=args.seeds,
     )
     print("training M2 across seeds")
     m2_runs = train_seed_sweep(
-        frames_m2, features=m2_features, categorical=categorical_columns(df, m2_features), **common
+        frames_m2,
+        features=m2_features,
+        categorical=categorical_columns(df, m2_features),
+        params=m2_cfg.model.params,
+        num_boost_round=m2_cfg.model.num_boost_round,
+        early_stopping_rounds=m2_cfg.model.early_stopping_rounds,
+        seeds=args.seeds,
     )
 
     rows = []
@@ -165,7 +190,15 @@ def main() -> None:
         se = s["sd_diff"] / np.sqrt(s["n_seeds"]) if s["n_seeds"] > 1 else float("nan")
         ratio = s["mean_diff"] / se if se and se > 0 else float("nan")
         call = "real" if abs(ratio) > 2.5 else "within noise"
-        print(f"  {name:<16} {s['mean_diff']:+.4f} +/- {se:.4f} (se)  t~{ratio:+.1f}  {call}")
+        print(
+            f"  {name:<16} {s['mean_diff']:+.4f}  95% CI "
+            f"[{s['ci_low']:+.4f}, {s['ci_high']:+.4f}]  t~{ratio:+.1f}  {call}"
+        )
+    print(
+        "\n  'within noise' means no difference was detected, not that none exists.\n"
+        "  The interval half-width is the smallest effect this design could have\n"
+        "  resolved; anything smaller would have looked like this either way."
+    )
 
     suffix = "_community" if args.community else ""
     out = paths.report_path(f"multiseed_m1_vs_m2{suffix}.json")

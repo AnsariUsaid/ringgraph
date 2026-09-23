@@ -67,3 +67,69 @@
 
   --shadow-float: 0 8px 24px -6px rgba(0, 0, 0, 0.6), 0 2px 6px -2px rgba(0, 0, 0, 0.5);
 }
+
+/* Motion.
+ *
+ * Three durations and two easings, and that is the whole vocabulary. The
+ * workbench stays still -- no entrance animation on lists, rows or panels,
+ * because a table that animates every time you filter it is exhausting to use.
+ * The landing page is the exception: it is read once, so it can afford to
+ * introduce itself.
+ */
+:root {
+  --dur-fast: 120ms;
+  --dur-base: 240ms;
+  --dur-slow: 560ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: scale(1.04) translate(0, 0);
+  }
+  to {
+    transform: scale(1.09) translate(-1.5%, -1%);
+  }
+}
+
+/* Staggered entrance. Elements start hidden so there is no flash of unstyled
+   position before the animation begins. */
+.rise {
+  opacity: 0;
+  animation: rise var(--dur-slow) var(--ease-out) forwards;
+}
+
+.rise-1 { animation-delay: 60ms; }
+.rise-2 { animation-delay: 140ms; }
+.rise-3 { animation-delay: 220ms; }
+.rise-4 { animation-delay: 300ms; }
+.rise-5 { animation-delay: 380ms; }
+.rise-6 { animation-delay: 460ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    opacity: 1;
+    animation: none;
+  }
+}

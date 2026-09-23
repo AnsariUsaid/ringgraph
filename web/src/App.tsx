@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Navbar } from "./components/Navbar";
 import { RingList } from "./panels/RingList";
 import { GraphCanvas } from "./panels/GraphCanvas";
 import { EvidencePanel } from "./panels/EvidencePanel";
 import { ModelComparison } from "./panels/ModelComparison";
+import { Landing } from "./panels/Landing";
+import { VIEWS, type View } from "./views";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,13 +20,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-type View = "investigate" | "results";
-
-const VIEWS: { key: View; label: string; hint: string }[] = [
-  { key: "investigate", label: "Investigate", hint: "explore detected rings" },
-  { key: "results", label: "Results", hint: "does structure add lift?" },
-];
 
 function Panel({ children, side }: { children: React.ReactNode; side: "left" | "right" }) {
   return (
@@ -44,12 +40,21 @@ function Panel({ children, side }: { children: React.ReactNode; side: "left" | "
   );
 }
 
-/** Ring exploration: list drives canvas drives evidence. */
+/** Ring exploration: list drives canvas drives evidence.
+ *
+ * Takes the full viewport height with the navbar floating over it, because the
+ * canvas is the one thing here that genuinely benefits from every pixel.
+ */
 function Investigate() {
   const [sort, setSort] = useState("burst_share");
   return (
     <div
-      style={{ display: "grid", gridTemplateColumns: "320px 1fr 400px", flex: 1, minHeight: 0 }}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "320px minmax(0, 1fr) 400px",
+        height: "100vh",
+        minHeight: 0,
+      }}
     >
       <Panel side="left">
         <RingList sort={sort} onSortChange={setSort} />
@@ -64,69 +69,31 @@ function Investigate() {
   );
 }
 
-function Workbench() {
-  const [view, setView] = useState<View>("investigate");
+function Shell() {
+  const [view, setView] = useState<View>("overview");
+
+  const navigate = (next: View) => {
+    setView(next);
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", minHeight: 0 }}>
-      <header
-        style={{
-          height: 52,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 16px",
-          borderBottom: "1px solid var(--border-subtle)",
-          background: "var(--bg-app)",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <span style={{ fontSize: 15, fontWeight: 600 }}>Relational Fraud Intelligence</span>
-          <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>
-            {VIEWS.find((v) => v.key === view)?.hint}
-          </span>
-        </div>
-        {/* Two views rather than a tab inside the evidence panel: the model
-            comparison shares no state with the graph and needs the full width
-            for its intervals. */}
-        <nav style={{ display: "flex", gap: 2 }}>
-          {VIEWS.map((option) => (
-            <button
-              key={option.key}
-              onClick={() => setView(option.key)}
-              aria-current={view === option.key}
-              style={{
-                fontSize: 12,
-                padding: "5px 12px",
-                borderRadius: "var(--radius-control)",
-                color: view === option.key ? "var(--accent)" : "var(--fg-secondary)",
-                background: view === option.key ? "var(--accent-muted)" : "transparent",
-                border: `1px solid ${view === option.key ? "var(--accent)" : "transparent"}`,
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </nav>
-      </header>
-
-      {view === "investigate" ? (
-        <Investigate />
-      ) : (
-        <div className="scroll" style={{ flex: 1, minHeight: 0 }}>
-          <ModelComparison />
-        </div>
-      )}
-    </div>
+    <>
+      <Navbar view={view} onChange={navigate} items={VIEWS} />
+      {/* Keyed so each view re-enters rather than swapping in place. */}
+      <main key={view} style={{ animation: "fade var(--dur-base) var(--ease-out)" }}>
+        {view === "overview" && <Landing onNavigate={navigate} />}
+        {view === "investigate" && <Investigate />}
+        {view === "results" && <ModelComparison />}
+      </main>
+    </>
   );
 }
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Workbench />
+      <Shell />
     </QueryClientProvider>
   );
 }

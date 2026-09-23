@@ -3,7 +3,6 @@ import { api, queryKeys } from "../api/client";
 import { AXIS_ORDER, type AxisName } from "../api/types";
 import { RiskSignature } from "../components/RiskSignature";
 import { StatePanel } from "../components/StatePanel";
-import { NodeDetail } from "./NodeDetail";
 import { TemporalStrip } from "./TemporalStrip";
 import { formatAmount, riskColor, truncateId } from "../lib/risk";
 import { useSelection } from "../store/selection";
@@ -70,17 +69,11 @@ function AxisBreakdown({ axes, raw }: { axes: Record<AxisName, number>; raw: Rec
 export function EvidencePanel() {
   const ringId = useSelection((s) => s.ringId);
   const focusedAttribute = useSelection((s) => s.focusedAttribute);
-  const selectedNodeId = useSelection((s) => s.selectedNodeId);
   const setFocusedAttribute = useSelection((s) => s.setFocusedAttribute);
 
   const detail = useQuery({
     queryKey: queryKeys.ring(ringId ?? -1),
     queryFn: () => api.ring(ringId as number),
-    enabled: ringId !== null,
-  });
-  const subgraph = useQuery({
-    queryKey: queryKeys.subgraph(ringId ?? -1),
-    queryFn: () => api.subgraph(ringId as number),
     enabled: ringId !== null,
   });
   const timeline = useQuery({
@@ -96,13 +89,10 @@ export function EvidencePanel() {
   if (!detail.data) return <StatePanel title="Loading evidence…" />;
 
   const ring = detail.data;
-  const spanSeconds = timeline.data ? timeline.data.t_max - timeline.data.t_min : null;
+  const hours = timeline.data ? (timeline.data.t_max - timeline.data.t_min) / 3600 : null;
 
   return (
     <div className="scroll" style={{ height: "100%" }}>
-      {selectedNodeId && subgraph.data && (
-        <NodeDetail nodeId={selectedNodeId} ring={ring} elements={subgraph.data.elements} />
-      )}
       <div style={{ padding: "12px", borderBottom: "1px solid var(--border-subtle)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span className="mono" style={{ fontSize: 20, fontWeight: 600 }}>
@@ -117,17 +107,10 @@ export function EvidencePanel() {
           <span className="mono">{ring.n_clients}</span> clients sharing{" "}
           <span className="mono">{ring.n_shared_attributes}</span> attributes,{" "}
           <span className="mono">{ring.n_transactions}</span> transactions
-          {spanSeconds !== null && (
+          {hours !== null && (
             <>
               {" "}
-              across{" "}
-              <span className="mono">
-                {spanSeconds < 3600
-                  ? `${Math.max(1, Math.round(spanSeconds / 60))} min`
-                  : spanSeconds < 48 * 3600
-                    ? `${(spanSeconds / 3600).toFixed(1)}h`
-                    : `${ring.span_days}d`}
-              </span>
+              across <span className="mono">{hours < 48 ? `${hours.toFixed(1)}h` : `${ring.span_days}d`}</span>
             </>
           )}
           .

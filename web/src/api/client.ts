@@ -27,7 +27,6 @@ async function get<T>(path: string): Promise<T> {
 }
 
 export const api = {
-  health: () => get<{ status: string; rings: number; clients: number }>("/health"),
   rings: (sort = "composite", limit = 120) =>
     get<RingListResponse>(`/rings?sort=${sort}&limit=${limit}`),
   ring: (id: number) => get<RingDetail>(`/rings/${id}`),

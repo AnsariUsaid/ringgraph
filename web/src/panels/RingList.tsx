@@ -50,7 +50,6 @@ export function RingList({ sort, onSortChange }: { sort: string; onSortChange: (
       <div
         style={{
           display: "flex",
-          flexWrap: "wrap",
           gap: 2,
           padding: "6px 8px",
           borderBottom: "1px solid var(--border-subtle)",

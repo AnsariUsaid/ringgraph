@@ -1,12 +1,9 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Navbar } from "./components/Navbar";
 import { RingList } from "./panels/RingList";
 import { GraphCanvas } from "./panels/GraphCanvas";
 import { EvidencePanel } from "./panels/EvidencePanel";
 import { ModelComparison } from "./panels/ModelComparison";
-import { Landing } from "./panels/Landing";
-import { VIEWS, type View } from "./views";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,16 +18,17 @@ const queryClient = new QueryClient({
   },
 });
 
-function Panel({ children, side }: { children: React.ReactNode; side: "left" | "right" }) {
+function Panel({ children, right = false }: { children: React.ReactNode; right?: boolean }) {
   return (
     <div
       style={{
         background: "var(--bg-panel)",
-        [side === "left" ? "borderRight" : "borderLeft"]: "1px solid var(--border-subtle)",
+        borderLeft: right ? "1px solid var(--border-subtle)" : undefined,
+        borderRight: right ? undefined : "1px solid var(--border-subtle)",
         display: "flex",
         flexDirection: "column",
         // Without this a flex/grid child refuses to shrink and grows the panel
-        // off-screen. The most reliable layout bug in this shape.
+        // off-screen. It is the single most reliable layout bug in this shape.
         minHeight: 0,
         minWidth: 0,
       }}
@@ -40,60 +38,81 @@ function Panel({ children, side }: { children: React.ReactNode; side: "left" | "
   );
 }
 
-/** Ring exploration: list drives canvas drives evidence.
- *
- * Takes the full viewport height with the navbar floating over it, because the
- * canvas is the one thing here that genuinely benefits from every pixel.
- */
-function Investigate() {
+function Workbench() {
+  // Opens on burst share, not on plan.md's composite. The composite is still
+  // computed, still shown and still one click away -- its definition is
+  // untouched. But it ranks at 1.28x against burst share's 1.69x, because two
+  // of its four axes are anti-predictive and one is 82% ties, so defaulting to
+  // it would open the tool on a ranking we have measured as the weaker one
+  // (D-47, D-48).
   const [sort, setSort] = useState("burst_share");
+  const [tab, setTab] = useState<"evidence" | "models">("evidence");
+
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "320px minmax(0, 1fr) 400px",
-        height: "100vh",
-        minHeight: 0,
-      }}
-    >
-      <Panel side="left">
-        <RingList sort={sort} onSortChange={setSort} />
-      </Panel>
-      <div style={{ minWidth: 0, minHeight: 0 }}>
-        <GraphCanvas />
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", minHeight: 0 }}>
+      <header
+        style={{
+          height: 52,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 16px",
+          borderBottom: "1px solid var(--border-subtle)",
+          background: "var(--bg-app)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+          <span style={{ fontSize: 15, fontWeight: 600 }}>Relational Fraud Intelligence</span>
+          <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>
+            coordinated ring detection via shared-device structure
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: 2 }}>
+          {(["evidence", "models"] as const).map((key) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              style={{
+                fontSize: 11,
+                padding: "4px 10px",
+                borderRadius: "var(--radius-control)",
+                color: tab === key ? "var(--accent)" : "var(--fg-muted)",
+                background: tab === key ? "var(--accent-muted)" : "transparent",
+                border: `1px solid ${tab === key ? "var(--accent)" : "transparent"}`,
+              }}
+            >
+              {key === "evidence" ? "Evidence" : "Model comparison"}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "320px 1fr 400px",
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        <Panel>
+          <RingList sort={sort} onSortChange={setSort} />
+        </Panel>
+        <div style={{ minWidth: 0, minHeight: 0 }}>
+          <GraphCanvas />
+        </div>
+        <Panel right>{tab === "evidence" ? <EvidencePanel /> : <ModelComparison />}</Panel>
       </div>
-      <Panel side="right">
-        <EvidencePanel />
-      </Panel>
     </div>
-  );
-}
-
-function Shell() {
-  const [view, setView] = useState<View>("overview");
-
-  const navigate = (next: View) => {
-    setView(next);
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-  };
-
-  return (
-    <>
-      <Navbar view={view} onChange={navigate} items={VIEWS} />
-      {/* Keyed so each view re-enters rather than swapping in place. */}
-      <main key={view} style={{ animation: "fade var(--dur-base) var(--ease-out)" }}>
-        {view === "overview" && <Landing onNavigate={navigate} />}
-        {view === "investigate" && <Investigate />}
-        {view === "results" && <ModelComparison />}
-      </main>
-    </>
   );
 }
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Shell />
+      <Workbench />
     </QueryClientProvider>
   );
 }

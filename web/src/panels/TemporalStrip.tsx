@@ -33,17 +33,7 @@ export function TemporalStrip({ data, width = 380 }: { data: TimelineResponse; w
   const span = Math.max(rawSpan, 3600);
   const x = (t: number) => LEFT + ((t - data.t_min) / span) * plotWidth;
 
-  // Rings that fire inside an hour -- the most interesting ones -- labelled
-  // every tick "0.0h", which reads as broken rather than as a tight burst.
-  // Pick the unit from the actual span.
-  const unit =
-    rawSpan >= 2 * 86400
-      ? { divisor: 86400, suffix: "d" }
-      : rawSpan >= 7200
-        ? { divisor: 3600, suffix: "h" }
-        : { divisor: 60, suffix: "m" };
-  const spanInUnits = rawSpan / unit.divisor;
-  const decimals = spanInUnits < 10 ? 1 : 0;
+  const hours = rawSpan / 3600;
   const ticks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
@@ -66,8 +56,7 @@ export function TemporalStrip({ data, width = 380 }: { data: TimelineResponse; w
             textAnchor="middle"
             className="mono"
           >
-            {(fraction * spanInUnits).toFixed(decimals)}
-            {unit.suffix}
+            {(fraction * hours).toFixed(hours < 6 ? 1 : 0)}h
           </text>
         </g>
       ))}

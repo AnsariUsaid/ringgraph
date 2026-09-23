@@ -18,8 +18,6 @@ cytoscape.use(fcose);
 export function GraphCanvas() {
   const ringId = useSelection((s) => s.ringId);
   const focusedAttribute = useSelection((s) => s.focusedAttribute);
-  const selectedNodeId = useSelection((s) => s.selectedNodeId);
-  const setSelectedNode = useSelection((s) => s.setSelectedNode);
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
 
@@ -37,10 +35,6 @@ export function GraphCanvas() {
       // wheel sensitivity is uncomfortably fast on a trackpad and is an instant
       // "this feels cheap" tell.
       wheelSensitivity: 0.25,
-      // A five-node ring fitted to a wide pane zooms so far that 9px labels
-      // render larger than the nodes. Cap it; the user can still zoom in.
-      maxZoom: 1.6,
-      minZoom: 0.15,
       boxSelectionEnabled: false,
       textureOnViewport: true,
       hideEdgesOnViewport: true,
@@ -49,7 +43,7 @@ export function GraphCanvas() {
         {
           selector: "node",
           style: {
-            "background-color": "#6b7ea3",
+            "background-color": "var(--node-other)",
             width: 18,
             height: 18,
             "border-width": 0,
@@ -58,26 +52,26 @@ export function GraphCanvas() {
         },
         {
           selector: 'node[kind = "Client"]',
-          style: { "background-color": "#7cc4ff", width: 22, height: 22, shape: "ellipse" },
+          style: { "background-color": "#7aa7ff", width: 22, height: 22, shape: "ellipse" },
         },
         {
           selector: 'node[kind = "Client"][?is_fraud]',
           style: {
-            "background-color": "#ff4d6d",
+            "background-color": "#f04e4e",
             "border-width": 2,
-            "border-color": "#ffc9d4",
+            "border-color": "#ffd0d0",
             width: 26,
             height: 26,
           },
         },
-        { selector: 'node[kind = "DeviceInfo"]', style: { "background-color": "#c792ea", shape: "round-rectangle" } },
-        { selector: 'node[kind = "id_33"]', style: { "background-color": "#3ddce8", shape: "diamond" } },
-        { selector: 'node[kind = "id_30"]', style: { "background-color": "#ffc46b", shape: "round-triangle" } },
-        { selector: 'node[kind = "id_31"]', style: { "background-color": "#a6e34d", shape: "hexagon" } },
+        { selector: 'node[kind = "DeviceInfo"]', style: { "background-color": "#c77dff", shape: "round-rectangle" } },
+        { selector: 'node[kind = "id_33"]', style: { "background-color": "#4fd1c5", shape: "diamond" } },
+        { selector: 'node[kind = "id_30"]', style: { "background-color": "#f2b544", shape: "round-triangle" } },
+        { selector: 'node[kind = "id_31"]', style: { "background-color": "#6fcf97", shape: "hexagon" } },
         {
           selector: "edge",
           style: {
-            "line-color": "#2b3a5c",
+            "line-color": "#3a4453",
             width: 1,
             opacity: 0.45,
             "curve-style": "straight",
@@ -85,7 +79,7 @@ export function GraphCanvas() {
         },
         {
           selector: 'edge[kind = "LINKED"]',
-          style: { "line-color": "#3ddce8", width: "mapData(weight, 1, 6, 1, 4)", opacity: 0.55 },
+          style: { "line-color": "#4c9aff", width: "mapData(weight, 1, 6, 1, 4)", opacity: 0.55 },
         },
         // Labels are the most expensive thing in Cytoscape's renderer, so they
         // appear only where they are being read.
@@ -94,17 +88,13 @@ export function GraphCanvas() {
           style: {
             label: "data(label)",
             "font-size": 9,
-            color: "#97a7c2",
+            color: "#9ba7b8",
             "text-margin-y": -4,
             "min-zoomed-font-size": 8,
           },
         },
         { selector: ".dimmed", style: { opacity: 0.12 } },
-        {
-          selector: ".picked",
-          style: { "border-width": 3, "border-color": "#c8f751", "overlay-opacity": 0 },
-        },
-        { selector: ".hovered", style: { "border-width": 3, "border-color": "#7ff0f8" } },
+        { selector: ".hovered", style: { "border-width": 3, "border-color": "#7fb8ff" } },
       ],
     });
 
@@ -112,12 +102,6 @@ export function GraphCanvas() {
     // mousemove, and a render per pixel would re-reconcile the whole canvas.
     cy.on("mouseover", "node", (event) => event.target.addClass("hovered"));
     cy.on("mouseout", "node", (event) => event.target.removeClass("hovered"));
-    // Selection goes through React because a side panel renders from it; hover
-    // does not, because it fires on mousemove.
-    cy.on("tap", "node", (event) => setSelectedNode(event.target.id()));
-    cy.on("tap", (event) => {
-      if (event.target === cy) setSelectedNode(null);
-    });
     cyRef.current = cy;
 
     // A Cytoscape container inside a CSS grid reliably mounts at zero height,
@@ -133,7 +117,7 @@ export function GraphCanvas() {
       cy.destroy();
       cyRef.current = null;
     };
-  }, [setSelectedNode]);
+  }, []);
 
   useEffect(() => {
     const cy = cyRef.current;
@@ -163,17 +147,6 @@ export function GraphCanvas() {
       layout.stop();
     };
   }, [data]);
-
-  // Selection is a class toggle inside cy.batch: no React reconciliation and no
-  // relayout, which is the whole reason the canvas stays responsive.
-  useEffect(() => {
-    const cy = cyRef.current;
-    if (!cy) return;
-    cy.batch(() => {
-      cy.elements().removeClass("picked");
-      if (selectedNodeId) cy.getElementById(selectedNodeId).addClass("picked");
-    });
-  }, [selectedNodeId, data]);
 
   // Attribute focus dims everything except that attribute's mediated edges.
   useEffect(() => {
@@ -214,8 +187,7 @@ export function GraphCanvas() {
             pointerEvents: "none",
           }}
         >
-          {data.n_nodes} clients · {data.elements.length - data.n_nodes} links & attributes ·
-          click a node for detail
+          {data.n_nodes} clients · {data.elements.length - data.n_nodes} links & attributes
         </div>
       )}
     </div>

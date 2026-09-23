@@ -1,0 +1,188 @@
+/* Motion primitives.
+ *
+ * Every animation here is a transform or an opacity change -- nothing animates
+ * layout, width or box-shadow on a hot path, because those relayout or repaint
+ * the whole subtree and are what makes a page feel heavy rather than fast.
+ *
+ * The reduced-motion block at the bottom is not a courtesy: three of these run
+ * continuously, and a vestibular-sensitive reader has no way to stop them
+ * otherwise.
+ */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.994);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes page-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0) scale(0.996);
+  }
+}
+
+/* The route wipe: a thin accent bar that crosses the viewport once per
+   navigation. It is the only thing on screen during the swap, which is what
+   hides the incoming page's first paint. */
+@keyframes wipe {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  48% {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  52% {
+    transform: scaleX(1);
+    transform-origin: right;
+  }
+  100% {
+    transform: scaleX(0);
+    transform-origin: right;
+  }
+}
+
+@keyframes ripple {
+  from {
+    transform: scale(0);
+    opacity: 0.32;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(3%, -4%, 0) scale(1.06);
+  }
+  66% {
+    transform: translate3d(-3%, 3%, 0) scale(0.96);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Scroll reveal. The element is hidden by the class and released by the
+   observer, so nothing is invisible if JS never runs -- the class is only
+   applied from JS in the first place. */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity 620ms var(--ease-out),
+    transform 620ms var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Lift-on-hover. Scale is kept under 1.02 -- past that a card reads as a
+   button rather than a surface, and the text visibly resamples. */
+.lift {
+  transition:
+    transform 320ms var(--ease-out),
+    box-shadow 320ms var(--ease-out),
+    border-color 320ms var(--ease-out);
+  will-change: transform;
+}
+
+.lift:hover {
+  transform: translate3d(0, -3px, 0);
+  box-shadow: var(--lift-2);
+  border-color: var(--rule-strong);
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--paper-sunken) 25%,
+    rgba(255, 255, 255, 0.85) 50%,
+    var(--paper-sunken) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .lift:hover {
+    transform: none;
+  }
+  .skeleton {
+    animation: none;
+  }
+}

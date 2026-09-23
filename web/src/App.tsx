@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RingList } from "./panels/RingList";
-import { GraphCanvas } from "./panels/GraphCanvas";
-import { EvidencePanel } from "./panels/EvidencePanel";
-import { ModelComparison } from "./panels/ModelComparison";
+import { Navbar } from "./components/Navbar";
+import { Landing } from "./pages/Landing";
+import { Explore } from "./pages/Explore";
+import { Results } from "./pages/Results";
+import { RouterProvider, useRouter } from "./router";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,101 +19,92 @@ const queryClient = new QueryClient({
   },
 });
 
-function Panel({ children, right = false }: { children: React.ReactNode; right?: boolean }) {
+/** The accent bar that crosses the viewport once per navigation.
+ *
+ * Keyed on the pending route so it restarts on every click, including a click
+ * on the route you are already leaving. It is the thing that makes the swap
+ * feel intentional rather than like a flash of unstyled content.
+ */
+function RouteWipe({ token }: { token: string | null }) {
+  if (!token) return null;
   return (
-    <div
+    <span
+      key={token}
+      aria-hidden
       style={{
-        background: "var(--bg-panel)",
-        borderLeft: right ? "1px solid var(--border-subtle)" : undefined,
-        borderRight: right ? undefined : "1px solid var(--border-subtle)",
-        display: "flex",
-        flexDirection: "column",
-        // Without this a flex/grid child refuses to shrink and grows the panel
-        // off-screen. It is the single most reliable layout bug in this shape.
-        minHeight: 0,
-        minWidth: 0,
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 3,
+        zIndex: 80,
+        background: "linear-gradient(90deg, var(--accent), var(--risk-3), var(--risk-4))",
+        animation: "wipe 620ms var(--ease-out) forwards",
       }}
-    >
-      {children}
-    </div>
+    />
   );
 }
 
-function Workbench() {
-  // Opens on burst share, not on plan.md's composite. The composite is still
-  // computed, still shown and still one click away -- its definition is
-  // untouched. But it ranks at 1.28x against burst share's 1.69x, because two
-  // of its four axes are anti-predictive and one is 82% ties, so defaulting to
-  // it would open the tool on a ranking we have measured as the weaker one
-  // (D-47, D-48).
-  const [sort, setSort] = useState("burst_share");
-  const [tab, setTab] = useState<"evidence" | "models">("evidence");
+function Pages() {
+  const { route, pending, phase } = useRouter();
+
+  // The workbench owns the viewport; the other two routes scroll. Toggling
+  // this on the body rather than on a wrapper is what stops the window
+  // scrollbar appearing and shifting the fixed nav by 11px on every
+  // navigation into Explore.
+  //
+  // Only above the breakpoint, though: below it the three columns stack into a
+  // taller-than-viewport page, and locking the body there makes everything
+  // under the first panel unreachable. The query has to be *live*, not read
+  // once -- resizing across the breakpoint while on Explore hits exactly that
+  // bug otherwise.
+  useEffect(() => {
+    if (route !== "/explore") {
+      document.body.style.overflow = "";
+      return;
+    }
+    const query = window.matchMedia("(min-width: 1121px)");
+    const apply = () => {
+      document.body.style.overflow = query.matches ? "hidden" : "";
+    };
+    apply();
+    query.addEventListener("change", apply);
+    return () => {
+      query.removeEventListener("change", apply);
+      document.body.style.overflow = "";
+    };
+  }, [route]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", minHeight: 0 }}>
-      <header
+    <>
+      <RouteWipe token={pending} />
+      <main
+        // Keyed on the route so React remounts rather than reconciles: two
+        // pages this different share nothing, and reconciling them would keep
+        // scroll positions and half-finished animations across the swap.
+        key={route}
         style={{
-          height: 52,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 16px",
-          borderBottom: "1px solid var(--border-subtle)",
-          background: "var(--bg-app)",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-          flexShrink: 0,
+          animation:
+            phase === "out"
+              ? "page-out 190ms var(--ease-out) forwards"
+              : "page-in 420ms var(--ease-out) both",
         }}
       >
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <span style={{ fontSize: 15, fontWeight: 600 }}>Relational Fraud Intelligence</span>
-          <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>
-            coordinated ring detection via shared-device structure
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: 2 }}>
-          {(["evidence", "models"] as const).map((key) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              style={{
-                fontSize: 11,
-                padding: "4px 10px",
-                borderRadius: "var(--radius-control)",
-                color: tab === key ? "var(--accent)" : "var(--fg-muted)",
-                background: tab === key ? "var(--accent-muted)" : "transparent",
-                border: `1px solid ${tab === key ? "var(--accent)" : "transparent"}`,
-              }}
-            >
-              {key === "evidence" ? "Evidence" : "Model comparison"}
-            </button>
-          ))}
-        </div>
-      </header>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "320px 1fr 400px",
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
-        <Panel>
-          <RingList sort={sort} onSortChange={setSort} />
-        </Panel>
-        <div style={{ minWidth: 0, minHeight: 0 }}>
-          <GraphCanvas />
-        </div>
-        <Panel right>{tab === "evidence" ? <EvidencePanel /> : <ModelComparison />}</Panel>
-      </div>
-    </div>
+        {route === "/" && <Landing />}
+        {route === "/explore" && <Explore />}
+        {route === "/results" && <Results />}
+      </main>
+    </>
   );
 }
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Workbench />
+      <RouterProvider>
+        <Navbar />
+        <Pages />
+      </RouterProvider>
     </QueryClientProvider>
   );
 }

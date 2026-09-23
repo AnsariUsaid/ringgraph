@@ -20,6 +20,12 @@ export function GraphCanvas() {
   const focusedAttribute = useSelection((s) => s.focusedAttribute);
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
+  // fcose runs asynchronously, so an in-flight layout has to be stopped
+  // *before* the core it is laying out is destroyed. React tears effects down
+  // in declaration order and the core is created in the first effect, so the
+  // running layout has to be reachable from that effect's cleanup -- hence a
+  // ref rather than a local.
+  const layoutRef = useRef<cytoscape.Layouts | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.subgraph(ringId ?? -1),
@@ -35,51 +41,66 @@ export function GraphCanvas() {
       // wheel sensitivity is uncomfortably fast on a trackpad and is an instant
       // "this feels cheap" tell.
       wheelSensitivity: 0.25,
+      // A five-node ring fitted to a 600px canvas lands at ~8x zoom, where the
+      // nodes are dinner plates and the labels are headlines. Capping the zoom
+      // means a small ring is drawn small -- which is also honest, since ring
+      // size is one of the things being compared.
+      maxZoom: 1.6,
+      minZoom: 0.15,
       boxSelectionEnabled: false,
       textureOnViewport: true,
       hideEdgesOnViewport: true,
       motionBlur: false,
       style: [
+        // Cytoscape's renderer cannot resolve CSS custom properties, so the
+        // paper palette is duplicated here as literals. These must be kept in
+        // step with tokens.css by hand -- there is no mechanism that does it.
         {
           selector: "node",
           style: {
-            "background-color": "var(--node-other)",
-            width: 18,
-            height: 18,
-            "border-width": 0,
+            "background-color": "#8c91a0",
+            width: 16,
+            height: 16,
+            "border-width": 1.5,
+            "border-color": "#fffefb",
             label: "",
           },
         },
         {
           selector: 'node[kind = "Client"]',
-          style: { "background-color": "#7aa7ff", width: 22, height: 22, shape: "ellipse" },
+          style: { "background-color": "#2f57d1", width: 20, height: 20, shape: "ellipse" },
         },
         {
           selector: 'node[kind = "Client"][?is_fraud]',
           style: {
-            "background-color": "#f04e4e",
-            "border-width": 2,
-            "border-color": "#ffd0d0",
+            "background-color": "#b41d3c",
+            // On paper a halo has to be drawn, not glowed: an outer ring in the
+            // surface colour plus a wider one in the risk colour is the only
+            // way to get the "advancing" read a dark theme gets for free.
+            "border-width": 3,
+            "border-color": "#f6d3da",
             width: 26,
             height: 26,
           },
         },
-        { selector: 'node[kind = "DeviceInfo"]', style: { "background-color": "#c77dff", shape: "round-rectangle" } },
-        { selector: 'node[kind = "id_33"]', style: { "background-color": "#4fd1c5", shape: "diamond" } },
-        { selector: 'node[kind = "id_30"]', style: { "background-color": "#f2b544", shape: "round-triangle" } },
-        { selector: 'node[kind = "id_31"]', style: { "background-color": "#6fcf97", shape: "hexagon" } },
+        { selector: 'node[kind = "DeviceInfo"]', style: { "background-color": "#8434c9", shape: "round-rectangle" } },
+        { selector: 'node[kind = "id_33"]', style: { "background-color": "#0a8a82", shape: "diamond" } },
+        { selector: 'node[kind = "id_30"]', style: { "background-color": "#ab6f17", shape: "round-triangle" } },
+        { selector: 'node[kind = "id_31"]', style: { "background-color": "#2c874c", shape: "hexagon" } },
         {
           selector: "edge",
           style: {
-            "line-color": "#3a4453",
+            "line-color": "#a49b88",
             width: 1,
-            opacity: 0.45,
+            // Higher than the dark theme's 0.45: a light edge on paper has far
+            // less contrast to spend, so it has to be drawn nearer to solid.
+            opacity: 0.55,
             "curve-style": "straight",
           },
         },
         {
           selector: 'edge[kind = "LINKED"]',
-          style: { "line-color": "#4c9aff", width: "mapData(weight, 1, 6, 1, 4)", opacity: 0.55 },
+          style: { "line-color": "#3b2bd9", width: "mapData(weight, 1, 6, 1, 4)", opacity: 0.4 },
         },
         // Labels are the most expensive thing in Cytoscape's renderer, so they
         // appear only where they are being read.
@@ -88,13 +109,19 @@ export function GraphCanvas() {
           style: {
             label: "data(label)",
             "font-size": 9,
-            color: "#9ba7b8",
-            "text-margin-y": -4,
+            "font-weight": 500,
+            color: "#4c5364",
+            // A halo behind the glyphs, because on paper a label crossing an
+            // edge is genuinely hard to read and there is no dark field to
+            // separate them.
+            "text-outline-color": "#faf8f3",
+            "text-outline-width": 2.5,
+            "text-margin-y": -5,
             "min-zoomed-font-size": 8,
           },
         },
-        { selector: ".dimmed", style: { opacity: 0.12 } },
-        { selector: ".hovered", style: { "border-width": 3, "border-color": "#7fb8ff" } },
+        { selector: ".dimmed", style: { opacity: 0.09 } },
+        { selector: ".hovered", style: { "border-width": 3, "border-color": "#3b2bd9" } },
       ],
     });
 
@@ -114,6 +141,8 @@ export function GraphCanvas() {
 
     return () => {
       observer.disconnect();
+      layoutRef.current?.stop();
+      layoutRef.current = null;
       cy.destroy();
       cyRef.current = null;
     };
@@ -142,10 +171,34 @@ export function GraphCanvas() {
       idealEdgeLength: 70,
     } as cytoscape.LayoutOptions);
     layout.one("layoutstop", () => cy.fit(cy.elements(), 40));
+    layoutRef.current = layout;
     layout.run();
     return () => {
-      layout.stop();
+      // On a ring switch this runs while the core is alive and stops the old
+      // layout. On unmount the mount effect's cleanup has already stopped it
+      // and destroyed the core, and calling stop() again would throw.
+      if (layoutRef.current !== layout) return;
+      if (cyRef.current && !cyRef.current.destroyed()) layout.stop();
+      layoutRef.current = null;
     };
+  }, [data]);
+
+  // Below the workbench breakpoint the columns stack and the page scrolls, so
+  // a Cytoscape instance that swallows the wheel traps the reader on the
+  // canvas with no way past it. Zoom and pan are handed back to the page
+  // there; the graph stays a fitted figure, which is the right trade on a
+  // screen that had no room to explore it anyway.
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1121px)");
+    const apply = () => {
+      const cy = cyRef.current;
+      if (!cy || cy.destroyed()) return;
+      cy.userZoomingEnabled(query.matches);
+      cy.userPanningEnabled(query.matches);
+    };
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
   }, [data]);
 
   // Attribute focus dims everything except that attribute's mediated edges.
@@ -163,7 +216,21 @@ export function GraphCanvas() {
   }, [focusedAttribute, data]);
 
   return (
-    <div style={{ position: "relative", height: "100%", background: "var(--bg-canvas)", minHeight: 0 }}>
+    <div style={{ position: "relative", height: "100%", background: "var(--paper-canvas)", minHeight: 0 }}>
+      {/* The drafting grid sits under the graph, not behind the panel, so it
+          pans with nothing and stays a backdrop rather than pretending to be
+          a coordinate system. */}
+      <div
+        className="gridded"
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: 0.6,
+          maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, #000 40%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, #000 40%, transparent 100%)",
+        }}
+      />
       <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
       {ringId === null && (
         <StatePanel
@@ -176,19 +243,60 @@ export function GraphCanvas() {
         <StatePanel title="Extracting subgraph…" body="Building the client projection for this ring." />
       )}
       {data && (
-        <div
-          className="mono"
-          style={{
-            position: "absolute",
-            left: 12,
-            bottom: 10,
-            fontSize: 11,
-            color: "var(--fg-muted)",
-            pointerEvents: "none",
-          }}
-        >
-          {data.n_nodes} clients · {data.elements.length - data.n_nodes} links & attributes
-        </div>
+        <>
+          {/* Legend, because six shapes and six hues are not self-describing
+              and the alternative is a reader guessing what a diamond is. */}
+          <div
+            style={{
+              position: "absolute",
+              left: 14,
+              top: 14,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 10,
+              padding: "7px 11px",
+              borderRadius: 999,
+              background: "rgba(252, 250, 246, 0.82)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              border: "1px solid var(--rule)",
+              boxShadow: "var(--lift-1)",
+              pointerEvents: "none",
+            }}
+          >
+            {[
+              ["#2f57d1", "client"],
+              ["#b41d3c", "fraud"],
+              ["#8434c9", "device"],
+              ["#0a8a82", "screen"],
+              ["#ab6f17", "os"],
+              ["#2c874c", "browser"],
+            ].map(([colour, label]) => (
+              <span key={label} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 10.5, color: "var(--ink-2)" }}>
+                <span style={{ width: 8, height: 8, borderRadius: 999, background: colour }} />
+                {label}
+              </span>
+            ))}
+          </div>
+
+          <div
+            className="mono"
+            style={{
+              position: "absolute",
+              left: 14,
+              bottom: 12,
+              fontSize: 11,
+              color: "var(--ink-3)",
+              padding: "4px 10px",
+              borderRadius: 999,
+              background: "rgba(252, 250, 246, 0.82)",
+              border: "1px solid var(--rule)",
+              pointerEvents: "none",
+            }}
+          >
+            {data.n_nodes} clients · {data.elements.length - data.n_nodes} links &amp; attributes
+          </div>
+        </>
       )}
     </div>
   );

@@ -1,69 +1,86 @@
-/* Design tokens -- "forensic instrument" (D-28).
+/* Design tokens -- "field notebook" (replaces the dark forensic instrument).
  *
- * Dark by default, and for a reason rather than a preference: a node-link
- * diagram is luminous marks on a field, so on dark, edges can sit at low
- * opacity and read as structure without competing with the nodes. Risk also
- * ramps monotonically with brightness, which it cannot do on light.
+ * Light, and light on purpose. The old palette argued that a node-link diagram
+ * wants a dark field so edges can sit at low opacity. That is true, and it is
+ * the one thing this palette has to pay for: on paper, risk cannot ramp with
+ * *brightness*, so it ramps with saturation and darkness instead, and the
+ * canvas gets darker, more saturated inks than a dark theme would need. Every
+ * ramp below is monotonic in perceived weight, so the loudest mark is still
+ * the riskiest one.
  *
- * Surfaces are cool neutrals, never pure black -- pure black plus glow is the
- * cyber cliche and is harsh over a long session. Elevation comes from hairline
- * borders and a background step, not shadows, which are nearly invisible on
- * dark and cost paint time.
+ * Surfaces are warm porcelain rather than white. Pure white plus hairlines is
+ * the default every dashboard ships with; a paper stock with a little yellow
+ * in it reads as a printed instrument and lets pure white become a *raised*
+ * surface instead of the floor.
  *
- * Red is reserved exclusively for risk. No red buttons, no red error chrome:
- * the moment controls start being green and red, the tool looks like a
- * template.
+ * Red is still reserved exclusively for risk. Chrome is indigo, positives are
+ * teal, and no control is ever red or green.
  */
 
 :root {
-  --bg-canvas: #0b0e14;
-  --bg-app: #0f131a;
-  --bg-panel: #141922;
-  --bg-raised: #1a212c;
-  --bg-sunken: #0c1017;
+  /* Surfaces, floor upward. Elevation is a step in paper tone plus a hairline,
+     with shadow used only for things that genuinely float (the nav, popovers). */
+  --paper-sunken: #e8e4da;
+  --paper: #f4f1ea;
+  --paper-raised: #fffefb;
+  --paper-canvas: #faf8f3;
 
-  --border-subtle: #1f2733;
-  --border-default: #2a3441;
-  --border-strong: #3a4657;
+  --rule: #e0dbd0;
+  --rule-strong: #cdc6b7;
+  --rule-ink: #b4ab99;
 
-  --fg-primary: #e6eaf2;
-  --fg-secondary: #9ba7b8;
-  --fg-muted: #6b7688;
+  --ink: #14161c;
+  --ink-2: #4c5364;
+  --ink-3: #8a8f9d;
+  --ink-4: #adb0ba;
 
-  --accent: #4c9aff;
-  --accent-hover: #6baeff;
-  --accent-muted: rgba(76, 154, 255, 0.14);
-  --focus-ring: #7fb8ff;
+  /* Signature. Electric indigo, which is far enough from both the risk ramp
+     and the node hues to never be mistaken for data. */
+  --accent: #3b2bd9;
+  --accent-hover: #2d1fb8;
+  --accent-wash: rgba(59, 43, 217, 0.08);
+  --accent-wash-2: rgba(59, 43, 217, 0.16);
+  --accent-2: #00968f;
+  --accent-2-wash: rgba(0, 150, 143, 0.1);
+  --focus-ring: #5f52e8;
 
-  /* Risk ramp: neutral to warm, never green-to-red. Green reads "safe" and
-     would cover 96% of the data, and green/red fails for deuteranopes. Both
-     luminance and saturation rise with risk, so low risk recedes. */
-  --risk-0: #3e4a5a;
-  --risk-1: #7a8394;
-  --risk-2: #c9a227;
-  --risk-3: #e8833a;
-  --risk-4: #f04e4e;
-  --risk-glow: rgba(240, 78, 78, 0.25);
+  /* Risk ramp. Sand to crimson: saturation rises and lightness falls together,
+     so low risk sinks into the paper and high risk is the darkest ink on the
+     page. Never green-to-red -- green would cover 96% of the data and the pair
+     fails for deuteranopes. */
+  --risk-0: #c6c0b2;
+  --risk-1: #d9a94b;
+  --risk-2: #e2832c;
+  --risk-3: #d2532f;
+  --risk-4: #b41d3c;
+  --risk-4-wash: rgba(180, 29, 60, 0.1);
 
-  /* Node types: hue plus shape encode type, halo and size encode risk. One
-     channel cannot carry both. The two low-information types are deliberately
-     greyed -- eight distinguishable hues is beyond what a dense canvas
-     supports. */
-  --node-client: #7aa7ff;
-  --node-device: #c77dff;
-  --node-screen: #4fd1c5;
-  --node-os: #f2b544;
-  --node-browser: #6fcf97;
-  --node-other: #8b93a7;
+  /* Node types: hue and shape encode type; halo and size encode risk. Darkened
+     for paper -- the dark theme's pastels vanish on it. */
+  --node-client: #2f57d1;
+  --node-device: #8434c9;
+  --node-screen: #0a8a82;
+  --node-os: #ab6f17;
+  --node-browser: #2c874c;
+  --node-other: #8c91a0;
+  --edge-default: #bbb4a4;
 
-  --edge-default: #3a4453;
+  --font-ui: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Instrument Serif", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
-  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --radius-control: 8px;
+  --radius-panel: 14px;
+  --radius-card: 18px;
+  --radius-chip: 999px;
 
-  --radius-control: 4px;
-  --radius-panel: 6px;
-  --radius-chip: 2px;
+  /* Layered and tinted toward the ink rather than pure black, so shadows read
+     as paper lift instead of a grey smear. */
+  --lift-1: 0 1px 2px rgba(31, 27, 15, 0.05), 0 2px 8px -4px rgba(31, 27, 15, 0.08);
+  --lift-2: 0 2px 4px rgba(31, 27, 15, 0.06), 0 8px 24px -8px rgba(31, 27, 15, 0.14);
+  --lift-3: 0 4px 10px rgba(31, 27, 15, 0.07), 0 20px 48px -16px rgba(31, 27, 15, 0.2);
 
-  --shadow-float: 0 8px 24px -6px rgba(0, 0, 0, 0.6), 0 2px 6px -2px rgba(0, 0, 0, 0.5);
+  --nav-height: 54px;
+  --ease-spring: cubic-bezier(0.34, 1.32, 0.42, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }

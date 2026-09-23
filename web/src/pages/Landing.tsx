@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, queryKeys } from "../api/client";
+import { AxisAtlas } from "../components/AxisAtlas";
 import { Constellation } from "../components/Constellation";
+import { Pipeline } from "../components/Pipeline";
 import { CountUp } from "../components/CountUp";
 import { Reveal } from "../components/Reveal";
 import { RiskSignature } from "../components/RiskSignature";
@@ -79,97 +81,6 @@ function SectionHead({ index, title, blurb }: { index: string; title: React.Reac
         </p>
       )}
     </Reveal>
-  );
-}
-
-/* -------------------------------------------------------------------- axes */
-
-const AXES: { key: AxisName; title: string; question: string; body: string }[] = [
-  {
-    key: "density",
-    title: "Density",
-    question: "How tightly are they wired together?",
-    body: "The share of possible client-to-client links that actually exist. A real ring is close to complete; a coincidence is a chain.",
-  },
-  {
-    key: "synchrony",
-    title: "Synchrony",
-    question: "Did they move at the same moment?",
-    body: "Transactions falling into the same narrow window across members. Coordination leaves a vertical wall in the event raster.",
-  },
-  {
-    key: "concentration",
-    title: "Concentration",
-    question: "How few attributes carry the whole group?",
-    body: "One device fingerprint holding twelve clients is a different object from twelve clients sharing a common browser.",
-  },
-  {
-    key: "tightness",
-    title: "Tightness",
-    question: "Do the amounts repeat?",
-    body: "Spread of transaction values inside the ring. Scripted cash-out picks a number and reuses it.",
-  },
-];
-
-/** Each axis gets its own small figure rather than a shared icon set: the
- *  figure *is* the definition, and four different marks are what stop the row
- *  reading as a template. */
-function AxisFigure({ axis }: { axis: AxisName }) {
-  const stroke = "var(--rule-ink)";
-  if (axis === "density") {
-    const points = [
-      [18, 12],
-      [46, 20],
-      [52, 46],
-      [26, 54],
-      [8, 34],
-    ];
-    return (
-      <svg width="64" height="66" viewBox="0 0 64 66" aria-hidden>
-        {points.map((a, i) =>
-          points.slice(i + 1).map((b, j) => (
-            <line key={`${i}-${j}`} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="var(--accent)" strokeWidth={1} opacity={0.45} />
-          )),
-        )}
-        {points.map(([x, y], i) => (
-          <circle key={i} cx={x} cy={y} r={4} fill="var(--accent)" />
-        ))}
-      </svg>
-    );
-  }
-  if (axis === "synchrony") {
-    return (
-      <svg width="64" height="66" viewBox="0 0 64 66" aria-hidden>
-        {[0, 1, 2, 3, 4].map((lane) => (
-          <g key={lane}>
-            <line x1={2} y1={10 + lane * 12} x2={62} y2={10 + lane * 12} stroke={stroke} strokeWidth={0.75} opacity={0.5} />
-            <rect x={31 + (lane % 2) * 1.5} y={5 + lane * 12} width={3} height={10} rx={1} fill="var(--risk-4)" />
-            <rect x={8 + lane * 5} y={5 + lane * 12} width={2.4} height={10} rx={1} fill={stroke} opacity={0.65} />
-          </g>
-        ))}
-      </svg>
-    );
-  }
-  if (axis === "concentration") {
-    return (
-      <svg width="64" height="66" viewBox="0 0 64 66" aria-hidden>
-        <rect x={24} y={4} width={16} height={16} rx={4} fill="var(--node-device)" />
-        {[6, 18, 32, 46, 58].map((x, i) => (
-          <g key={i}>
-            <line x1={32} y1={20} x2={x} y2={50} stroke="var(--node-device)" strokeWidth={1} opacity={0.4} />
-            <circle cx={x} cy={54} r={4} fill="var(--accent)" />
-          </g>
-        ))}
-      </svg>
-    );
-  }
-  return (
-    <svg width="64" height="66" viewBox="0 0 64 66" aria-hidden>
-      <line x1={2} y1={58} x2={62} y2={58} stroke={stroke} strokeWidth={0.75} />
-      {[20, 21, 20.5, 21, 20, 44, 20.5].map((v, i) => (
-        <rect key={i} x={3 + i * 8.6} y={58 - v} width={5} height={v} rx={1.5} fill={v > 30 ? stroke : "var(--risk-3)"} opacity={v > 30 ? 0.4 : 1} />
-      ))}
-    </svg>
   );
 }
 
@@ -348,51 +259,28 @@ export function Landing() {
                 Four questions, asked of every <em>cluster</em>.
               </>
             }
-            blurb="A ring is scored on four independent axes. They are kept separate rather than collapsed into one number, because which axis fires tells you what kind of coordination you are looking at."
+            blurb="Every ring is scored on four independent axes. They are kept separate rather than collapsed into one number, because which axis fires tells you what kind of coordination you are looking at — and because, measured honestly, only two of the four beat a ranking that sorts by size alone."
           />
-
-          <div className="grid-axes">
-            {AXES.map((axis, index) => (
-              <Reveal key={axis.key} delay={index * 90}>
-                <article
-                  className="card lift"
-                  style={{
-                    position: "relative",
-                    height: "100%",
-                    padding: "22px 20px 24px",
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* Index tab, cut into the corner. Cheap, and it is what
-                      makes these read as catalogued specimens. */}
-                  <span
-                    className="mono"
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      right: 0,
-                      padding: "5px 11px",
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: "var(--ink-3)",
-                      background: "var(--paper)",
-                      borderLeft: "1px solid var(--rule)",
-                      borderBottom: "1px solid var(--rule)",
-                      borderRadius: "0 var(--radius-card) 0 10px",
-                    }}
-                  >
-                    0{index + 1}
-                  </span>
-                  <AxisFigure axis={axis.key} />
-                  <h3 style={{ margin: "14px 0 4px", fontSize: 17, fontWeight: 600, letterSpacing: "-0.02em" }}>
-                    {axis.title}
-                  </h3>
-                  <p style={{ margin: 0, fontSize: 12.5, color: "var(--accent)", fontWeight: 500 }}>{axis.question}</p>
-                  <p style={{ margin: "10px 0 0", fontSize: 13, lineHeight: 1.6, color: "var(--ink-2)" }}>{axis.body}</p>
-                </article>
-              </Reveal>
-            ))}
-          </div>
+          <Reveal>
+            <AxisAtlas />
+          </Reveal>
+          <Reveal delay={120}>
+            <p
+              style={{
+                margin: "26px 0 0",
+                paddingLeft: 18,
+                borderLeft: "2px solid var(--risk-3)",
+                fontSize: 14,
+                lineHeight: 1.72,
+                color: "var(--ink-2)",
+                maxWidth: 720,
+              }}
+            >
+              Density and concentration land <em style={{ fontStyle: "normal", color: "var(--ink)" }}>below</em> the
+              size-only control. They are kept anyway, and shown anyway: an axis that does not rank still describes,
+              and hiding the two that failed would make the composite look better than it is.
+            </p>
+          </Reveal>
         </section>
 
         {/* ---------------------------------------------------- signature */}
@@ -570,39 +458,17 @@ export function Landing() {
         </section>
 
         {/* ------------------------------------------------------ pipeline */}
-        <section style={{ padding: "50px 0 80px" }}>
-          <SectionHead index="04" title={<>From raw rows to a ranked <em>catalogue</em>.</>} />
-          <Reveal>
-            <div className="grid-steps">
-              {[
-                ["Ingest", "590k transactions, 144k identity rows"],
-                ["Resolve", "blake2b uid map over shared attributes"],
-                ["Project", "client graph, 4,762 linked nodes"],
-                ["Cluster", "550 candidate rings"],
-                ["Score", "four axes plus burst share"],
-                ["Compare", "5 seeds, paired, reported honestly"],
-              ].map(([title, body], i) => (
-                <div
-                  key={title}
-                  className="lift"
-                  style={{
-                    position: "relative",
-                    padding: "16px 14px 18px",
-                    background: "var(--paper-raised)",
-                    border: "1px solid var(--rule)",
-                    borderRadius: "var(--radius-panel)",
-                    borderTop: `2px solid ${i === 5 ? "var(--risk-4)" : "var(--accent)"}`,
-                  }}
-                >
-                  <div className="mono caps" style={{ fontSize: 9, color: "var(--accent)" }}>
-                    step {i + 1}
-                  </div>
-                  <div style={{ marginTop: 6, fontSize: 14.5, fontWeight: 600 }}>{title}</div>
-                  <div style={{ marginTop: 4, fontSize: 12, color: "var(--ink-2)", lineHeight: 1.55 }}>{body}</div>
-                </div>
-              ))}
-            </div>
-          </Reveal>
+        <section style={{ padding: "50px 0 90px" }}>
+          <SectionHead
+            index="04"
+            title={
+              <>
+                From raw rows to a ranked <em>catalogue</em>.
+              </>
+            }
+            blurb="Seven steps, in the order the repository runs them, each with the number it actually produced. Two of them are gates rather than transformations — points where the measurement could have said stop, and very nearly did."
+          />
+          <Pipeline />
         </section>
 
         {/* ----------------------------------------------------- top rings */}

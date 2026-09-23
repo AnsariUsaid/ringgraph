@@ -206,14 +206,83 @@
    side and nothing at all on a 320 device. Below this the wordmark drops to
    its glyph and the items tighten; the three labels are the part that has to
    survive. */
-@media (max-width: 430px) {
+@media (max-width: 720px) {
+  .nav-item {
+    padding: 12px 18px !important;
+    font-size: 15px !important;
+  }
+  .nav-shell {
+    padding: 8px 9px 8px 18px !important;
+  }
+}
+
+@media (max-width: 500px) {
   .nav-wordmark {
     display: none;
   }
   .nav-item {
-    padding-inline: 11px !important;
+    padding: 11px 14px !important;
+    font-size: 14px !important;
   }
   .nav-shell {
-    padding-left: 10px !important;
+    padding: 7px 8px 7px 14px !important;
+  }
+}
+
+/* --- pipeline ----------------------------------------------------------- */
+
+.pipeline-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+  padding: 26px 0;
+}
+
+.pipeline-step + .pipeline-step {
+  border-top: 1px solid var(--rule);
+}
+
+/* The figure column is fixed-width and right-aligned so the seven numbers form
+   a readable column of their own -- that column is the summary of the section,
+   and it only works if the numbers line up. */
+.pipeline-figure {
+  width: 200px;
+  flex-shrink: 0;
+  text-align: right;
+  padding-top: 2px;
+}
+
+@media (max-width: 860px) {
+  .pipeline-step {
+    flex-wrap: wrap;
+    gap: 14px 22px;
+  }
+  /* `width: auto` is not enough to wrap: the prose column has flex:1 and
+     min-width:0, so it shrinks to nothing rather than pushing the figure to
+     the next line. Taking the full basis is what actually moves it. */
+  .pipeline-figure {
+    flex: 0 0 100%;
+    width: auto;
+    text-align: left;
+    padding-left: 44px;
+  }
+}
+
+/* --- axis atlas --------------------------------------------------------- */
+
+.atlas {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.atlas-panel {
+  padding: 26px 28px 28px;
+}
+
+@media (max-width: 900px) {
+  .atlas {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

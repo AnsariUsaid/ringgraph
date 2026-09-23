@@ -186,3 +186,104 @@
     animation: none;
   }
 }
+
+/* --- figure entrances ---------------------------------------------------
+ *
+ * Used by the axis atlas, whose figures replay whenever the selection
+ * changes. `transform-box: fill-box` is what makes transform-origin behave
+ * inside SVG; without it every scale pivots off the viewBox origin and the
+ * shapes fly in from the corner.
+ */
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: var(--dash, 200);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes grow-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(-14px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* The packet that travels the pipeline rail. Kept to transform only, so it
+   never invalidates layout on a page that is already animating reveals. */
+@keyframes travel {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  8%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(var(--travel, 400px));
+    opacity: 0;
+  }
+}
+
+.fig-draw {
+  stroke-dasharray: var(--dash, 200);
+  animation: draw 900ms var(--ease-out) both;
+}
+
+.fig-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pop 520ms var(--ease-spring) both;
+}
+
+.fig-grow {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: grow-y 620ms var(--ease-spring) both;
+}
+
+.fig-slide {
+  transform-box: fill-box;
+  animation: slide-in 520ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fig-draw,
+  .fig-pop,
+  .fig-grow,
+  .fig-slide {
+    animation: none;
+    stroke-dasharray: none;
+  }
+}

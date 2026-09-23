@@ -313,20 +313,33 @@ def metrics_models() -> dict[str, Any]:
 
 
 @app.get("/metrics/axes")
-def metrics_axes() -> dict[str, Any]:
-    """How well each Part 5 axis ranks rings by fraud content."""
+def metrics_axes(k: int = Query(50, ge=10, le=300)) -> dict[str, Any]:
+    """How well each Part 5 axis ranks rings by fraud content.
+
+    Reports a **size-controlled** enrichment rather than the share of top-ranked
+    rings holding two or more fraud clients. That earlier statistic was
+    dominated by ring size -- at the fraud rate among ring members, a ten-client
+    ring clears it 60% of the time by chance alone -- so a size-only ranking
+    scored highly for tautological reasons, and the shuffle test caught it by
+    scoring *higher* on destroyed labels (D-47).
+
+    Enrichment divides observed fraud clients by the number expected from ring
+    size, so a ranking that merely sorts by size scores 1.0.
+    """
     rings = catalogue()["rings"]
-    fraudy = rings["n_fraud_clients"] >= 2
-    baseline = float(fraudy.mean())
+    rate = float(rings["n_fraud_clients"].sum() / rings["n_clients"].sum())
     out = {}
     for axis in (*AXES, "composite", "n_clients", "burst_share"):
-        ranked = rings.sort_values(axis, ascending=False)
-        precision = float((ranked.head(50)["n_fraud_clients"] >= 2).mean())
+        top = rings.sort_values(axis, ascending=False).head(k)
+        expected = float(top["n_clients"].sum()) * rate
         out[axis] = {
-            "precision_at_50": precision,
-            "lift": float(precision / baseline) if baseline else float("nan"),
+            "enrichment": (
+                float(top["n_fraud_clients"].sum() / expected) if expected else float("nan")
+            ),
+            "observed_fraud_clients": int(top["n_fraud_clients"].sum()),
+            "expected_fraud_clients": expected,
         }
-    return {"baseline": baseline, "n_rings": len(rings), "axes": out}
+    return {"client_fraud_rate": rate, "k": k, "n_rings": len(rings), "axes": out}
 
 
 @app.get("/metrics/sweep")

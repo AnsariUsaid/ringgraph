@@ -55,9 +55,6 @@ def main() -> None:
     parser = base_parser(__doc__.splitlines()[0])
     parser.add_argument("--baseline", default="m1_tuned")
     parser.add_argument("--candidate", default="m2_c10w1")
-    parser.add_argument("--attach-ceiling", type=int, default=10)
-    parser.add_argument("--attach-weight", type=int, default=1)
-    parser.add_argument("--cadence", type=int, default=7)
     parser.add_argument("--n-boot", type=int, default=1000)
     args = parser.parse_args()
     cfg = resolve(args)
@@ -72,10 +69,25 @@ def main() -> None:
     test = merged[merged["split"] == "test"].reset_index(drop=True)
     print(f"\ntest rows compared: {len(test):,}  fraud: {int(test['y_true'].sum()):,}")
 
-    attach = read_parquet(
-        paths.attach_path(cfg.uid.recipe_name, 2, args.attach_ceiling, args.cadence),
-        columns=[schema.KEY, "has_structure", "st_degree"],
+    # Read the graph parameters from the resolved config, never from separate
+    # CLI defaults: the strata must come from the same attach table the
+    # candidate model was trained on, and decoupling them let the comparison
+    # silently stratify on a different graph.
+    attach_path = paths.attach_path(
+        cfg.uid.recipe_name,
+        cfg.graph.hub_min_degree,
+        cfg.graph.hub_max_degree,
+        cfg.snapshots.cadence_days,
     )
+    if not attach_path.exists():
+        raise SystemExit(
+            f"{attach_path} missing. It is derived from the resolved config "
+            f"(hub {cfg.graph.hub_min_degree}-{cfg.graph.hub_max_degree}, "
+            f"cadence {cfg.snapshots.cadence_days}); run scripts/80_snapshot_features.py "
+            f"with the same config first."
+        )
+    print(f"stratifying on {attach_path}")
+    attach = read_parquet(attach_path, columns=[schema.KEY, "has_structure", "st_degree"])
     test = test.merge(attach, on=schema.KEY, how="left")
     test["has_structure"] = test["has_structure"].fillna(False)
     test["linked"] = test["st_degree"].fillna(0) > 0

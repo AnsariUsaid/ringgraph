@@ -9,7 +9,10 @@ coordinated fraud that a well-tuned tabular model misses, at equal false-positiv
 
 ## Status
 
-Phase 0 — scaffold. No data ingested yet.
+Complete. All seven of plan.md's core build steps, plus community detection and
+the frontend. The headline result is a **null**: graph structure adds no
+measurable lift over a well-tuned tabular baseline. Ring *detection* works; ring
+structure does not improve per-transaction *prediction*.
 
 ## Stack
 
@@ -20,7 +23,7 @@ Phase 0 — scaffold. No data ingested yet.
 | Graph | Neo4j 5.x + Graph Data Science, `neo4j` Python driver |
 | GNN (optional M3) | PyTorch + PyTorch Geometric (HGT/RGCN), trained on Kaggle GPU |
 | Backend | FastAPI + Uvicorn |
-| Frontend | Vite + React + TypeScript, Cytoscape.js (`fcose`), Tailwind, Recharts |
+| Frontend | Vite + React + TypeScript, Cytoscape.js (`fcose`), Recharts, TanStack Query |
 
 ## Dataset
 
@@ -42,6 +45,37 @@ pip install -r requirements.txt
 ```
 
 All Python work runs inside `.venv`.
+
+## Reproducing the results
+
+Every result below comes from these commands, in order, against
+`configs/default.toml`. Steps 00–10 need the Kaggle credentials above; the rest
+are self-contained. Neo4j is needed only for steps 60–63, which produce
+diagnostics and the graph render — nothing in the result path depends on it.
+
+```bash
+.venv/bin/python scripts/00_download.py          # Kaggle -> data/raw
+.venv/bin/python scripts/10_ingest.py            # join, dtypes, day/D1n -> data/base
+.venv/bin/python scripts/20_profile.py           # missingness, entity degrees
+.venv/bin/python scripts/30_uid_map.py           # client keys, all three recipes
+.venv/bin/python scripts/35_hub_band.py          # client degrees -> hub band evidence
+.venv/bin/python scripts/40_label_homogeneity.py # THE TRAP A GATE
+.venv/bin/python scripts/45_edge_signal.py       # which attributes can carry a ring signal
+.venv/bin/python scripts/48_percolation.py       # chooses the degree band and weight floor
+.venv/bin/python scripts/50_synchrony.py         # THE COORDINATION GATE
+.venv/bin/python scripts/80_snapshot_features.py # Trap B structural features
+.venv/bin/python scripts/82_community_features.py
+.venv/bin/python scripts/71_tune.py --name m1    # -> configs/tuned/m1.toml (~30 min)
+.venv/bin/python scripts/70_train_m1.py --config configs/tuned/m1.toml --name m1_tuned
+.venv/bin/python scripts/91_multiseed.py --config configs/tuned/m1.toml   # THE HEADLINE (~40 min)
+.venv/bin/python scripts/95_ring_catalogue.py    # -> data/rings/*, what the API serves
+.venv/bin/python scripts/96_uid_sensitivity.py   # conclusions across all three recipes
+.venv/bin/python scripts/97_shuffle_sanity.py    # leakage check
+```
+
+`runs/index.jsonl` records every run with its resolved config and git commit.
+Generated artefacts (`data/`, `reports/`, `preds/`) are gitignored, so a fresh
+clone must run the pipeline before the demo has anything to serve.
 
 ## Running the demo
 
@@ -95,7 +129,7 @@ Splits are strictly temporal: train days 0–119, validation 120–150, test 151
 |---|---|---|
 | M1 | LightGBM baseline | Tabular only |
 | M2 | Structure-augmented | M1 + graph structural features |
-| M3 | Graph-native | Heterogeneous GNN over the Neo4j-derived graph |
+| M3 | Graph-native | Heterogeneous GNN — *not implemented*; plan.md names it the first thing to cut, and the M2 null gives no reason to expect a GNN over the same graph to do better |
 
 Primary metric is **TPR at fixed FPR (1% and 0.1%)**, with bootstrap confidence intervals on the
 *difference* between models rather than two separate point estimates.
@@ -105,7 +139,7 @@ Primary metric is **TPR at fixed FPR (1% and 0.1%)**, with bootstrap confidence 
 ```
 src/fds/      importable library (config, entity reconstruction, graph, features, models, eval)
 scripts/      numbered pipeline entrypoints, run in order
-api/          FastAPI service over Neo4j
+api/          FastAPI service over the precomputed ring catalogue (parquet, not Neo4j)
 web/          React frontend
 tests/        leakage and invariant tests
 data/         raw → interim → processed (gitignored, created at runtime)

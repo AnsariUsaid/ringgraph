@@ -9,22 +9,30 @@ seed = 20260921
 recipe_name = "v1_card1_addr1_d1n"
 
 [graph]
-# Measured, not guessed. The ceiling and the weight floor were chosen from the
-# percolation sweep in reports/percolation.json: at a ceiling of 100 with no
-# weight floor the largest component holds 94% of linked clients, failing
-# plan.md's own <50% verification rule. At 50/2 it holds 14.5%.
+# Chosen by maximising linked-client coverage subject to plan.md's percolation
+# rule (largest component < 50%), measured in reports/percolation.json. Neither
+# bound is a guess and neither used a label.
 #
-# Linking attributes are the identity block, not the plan's original four.
+#   ceiling 100, weight 1 -> 19,619 linked,  94.3% largest  (fails the rule)
+#   ceiling  50, weight 2 ->  1,628 linked,  14.5% largest
+#   ceiling  10, weight 1 ->  5,312 linked,  30.7% largest  <- chosen
+#   ceiling  20, weight 1 ->  8,379 linked,  51.8% largest  (fails the rule)
+#
+# Linking attributes are the identity block, not plan.md's original four:
 # card1/card2/addr1 are uid components, so linking on them re-imports the Trap A
-# labelling artefact (D-38); P_emaildomain is a hub by construction.
+# labelling artefact (D-38), and P_emaildomain is a hub by construction.
 hub_min_degree = 2
-hub_max_degree = 50
-min_edge_weight = 2
+hub_max_degree = 10
+min_edge_weight = 1
 link_types = ["DeviceInfo", "id_31", "id_33", "id_30", "id_17", "id_19", "id_20", "id_13"]
 
 [snapshots]
-cadence_days = 14
-first_end_day = 28
+# Cadence 7 rather than 14: a client only receives structure if it transacted
+# strictly before a boundary that is itself <= the target day, so a coarse
+# cadence strands short-lived clients. Measured: 39.5% of rows get a snapshot at
+# cadence 7 against 35.4% at 14, for about a minute of extra compute.
+cadence_days = 7
+first_end_day = 14
 
 [model]
 kind = "lightgbm"

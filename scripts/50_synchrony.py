@@ -27,7 +27,6 @@ from fds.artifacts import read_parquet
 from fds.cli import base_parser, record_run, resolve
 from fds.ingest import load_base
 from fds.links import (
-    IDENTITY_LINK_COLUMNS,
     LinkParams,
     build_links,
     component_summary,
@@ -48,23 +47,26 @@ WINDOWS = {"1h": 3600.0, "6h": 21600.0, "24h": 86400.0}
 def main() -> None:
     parser = base_parser(__doc__.splitlines()[0])
     parser.add_argument("--recipe", default=None)
-    parser.add_argument("--max-degree", type=int, default=50)
-    parser.add_argument("--min-weight", type=int, default=2)
     parser.add_argument("--permutations", type=int, default=40)
     args = parser.parse_args()
     cfg = resolve(args)
     recipe = args.recipe or cfg.uid.recipe_name
 
     uid_map = read_parquet(paths.uid_map_path(recipe))
-    columns = [schema.KEY, schema.TARGET, schema.TIME_RAW, *IDENTITY_LINK_COLUMNS]
+    link_columns = tuple(cfg.graph.link_types)
+    columns = [schema.KEY, schema.TARGET, schema.TIME_RAW, *link_columns]
     df = load_base(columns=[c for c in columns]).merge(
         uid_map, on=schema.KEY, validate="one_to_one"
     )
     client_label = df.groupby(schema.UID, observed=True)[schema.TARGET].max()
 
-    params = LinkParams(min_degree=2, max_degree=args.max_degree, min_weight=args.min_weight)
+    params = LinkParams(
+        min_degree=cfg.graph.hub_min_degree,
+        max_degree=cfg.graph.hub_max_degree,
+        min_weight=cfg.graph.min_edge_weight,
+    )
     print(f"building links: degree band 2-{params.max_degree}, min weight {params.min_weight}")
-    edges = build_links(df, uid_column=schema.UID, params=params)
+    edges = build_links(df, uid_column=schema.UID, columns=link_columns, params=params)
     members = connected_components(edges)
     perc = percolation_report(members)
 

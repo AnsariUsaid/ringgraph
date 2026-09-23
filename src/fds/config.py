@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Any, get_origin, get_type_hints
 
 from fds.entities import DEFAULT_RECIPE, UID_RECIPES
+from fds.links import IDENTITY_LINK_COLUMNS
 
 RUN_KEY_LENGTH = 8
 
@@ -64,16 +65,9 @@ class GraphConfig:
     hub_min_degree: int = 2
     hub_max_degree: int = 50
     min_edge_weight: int = 2
-    link_types: tuple[str, ...] = (
-        "DeviceInfo",
-        "id_31",
-        "id_33",
-        "id_30",
-        "id_17",
-        "id_19",
-        "id_20",
-        "id_13",
-    )
+    # Single source of truth lives in fds.links. Duplicating the tuple here is
+    # what let the gate scripts drift away from the pipeline.
+    link_types: tuple[str, ...] = IDENTITY_LINK_COLUMNS
 
     def __post_init__(self) -> None:
         if self.hub_min_degree < 2:

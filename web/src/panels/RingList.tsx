@@ -9,8 +9,8 @@ import { riskColor } from "../lib/risk";
 // showed the composite ranks below its own best component, and a reader should
 // be able to see that by clicking rather than take it on trust (D-48).
 const SORTS = [
-  { key: "composite", label: "Composite" },
   { key: "burst_share", label: "Burst" },
+  { key: "composite", label: "Composite" },
   { key: "synchrony", label: "Sync" },
   { key: "density", label: "Density" },
   { key: "tightness", label: "Amount" },

@@ -39,7 +39,13 @@ function Panel({ children, right = false }: { children: React.ReactNode; right?:
 }
 
 function Workbench() {
-  const [sort, setSort] = useState("composite");
+  // Opens on burst share, not on plan.md's composite. The composite is still
+  // computed, still shown and still one click away -- its definition is
+  // untouched. But it ranks at 1.28x against burst share's 1.69x, because two
+  // of its four axes are anti-predictive and one is 82% ties, so defaulting to
+  // it would open the tool on a ranking we have measured as the weaker one
+  // (D-47, D-48).
+  const [sort, setSort] = useState("burst_share");
   const [tab, setTab] = useState<"evidence" | "models">("evidence");
 
   return (

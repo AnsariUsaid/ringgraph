@@ -1,4 +1,7 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap");
 @import "./styles/tokens.css";
+@import "./styles/motion.css";
+@import "./styles/layout.css";
 
 *,
 *::before,
@@ -9,18 +12,30 @@
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
   margin: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--bg-app);
-  color: var(--fg-primary);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 13px; /* body default is 13, not 16 -- this is a dense tool */
-  line-height: 1.5;
-  letter-spacing: -0.011em;
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.012em;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* The paper grain. Two very low-contrast gradients rather than a noise PNG:
+     no extra request, and it scales with the viewport instead of tiling
+     visibly on a 4K display. */
+  background-image:
+    radial-gradient(ellipse 80% 50% at 15% -10%, rgba(59, 43, 217, 0.05), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 95% 5%, rgba(0, 150, 143, 0.05), transparent 60%);
+  background-attachment: fixed;
 }
 
 /* Numerics are always monospaced and tabular, so counts do not shuffle
@@ -28,14 +43,27 @@ body {
 .mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .caps {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--fg-muted);
+  color: var(--ink-3);
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+.display em {
+  font-style: italic;
+  color: var(--accent);
 }
 
 /* Every scroll container reserves its gutter. Without this the layout shifts
@@ -48,38 +76,73 @@ body {
 }
 
 .scroll::-webkit-scrollbar {
-  width: 10px;
+  width: 11px;
+}
+.scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 .scroll::-webkit-scrollbar-thumb {
-  background: var(--border-default);
+  background: var(--rule-strong);
   border-radius: 999px;
   border: 3px solid transparent;
   background-clip: content-box;
 }
 .scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--border-strong);
+  background: var(--rule-ink);
   background-clip: content-box;
 }
 
 button {
   font-family: inherit;
   font-size: inherit;
+  letter-spacing: inherit;
   color: inherit;
   background: none;
   border: none;
+  padding: 0;
   cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* The ruled surface used for anything that should read as a specimen card:
+   paper, a hairline, and a hover lift. Declared once rather than inlined on
+   every card, because a card style repeated in six files drifts in five. */
+.card {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-card);
+  box-shadow: var(--lift-1);
+}
+
+/* Faint engineering grid, used behind the graph canvas and the hero. Drawn in
+   CSS so it costs nothing and stays crisp at any zoom. */
+.gridded {
+  background-image:
+    linear-gradient(var(--rule) 1px, transparent 1px),
+    linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

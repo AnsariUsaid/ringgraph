@@ -1,0 +1,219 @@
+/* Layout classes.
+ *
+ * Everything else in this app is styled inline, which is fine for one-off
+ * paint but cannot express a media query. Every rule that has to *change* at a
+ * breakpoint lives here instead, so there is one file to read when asking
+ * "what happens to this page on a laptop".
+ *
+ * Breakpoints are chosen from the content, not from device names: 1120 is
+ * where the workbench's three columns stop having room, 860 is where a
+ * two-column editorial block stops being readable, 620 is phone.
+ */
+
+.page {
+  width: min(1120px, 100%);
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+.page--narrow {
+  width: min(1060px, 100%);
+}
+
+/* --- landing ------------------------------------------------------------ */
+
+.grid-axes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.grid-steps {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.grid-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.grid-examples {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* The divider between examples is a left border on desktop and a top border
+   when they stack, so a stacked set never shows a stray vertical hairline. */
+.grid-examples > * + * {
+  border-left: 1px solid var(--rule);
+}
+
+.finding {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: center;
+  padding: 38px 0;
+  border-top: 1px solid var(--rule);
+}
+
+/* The top-rings preview row. Its fixed columns add up to more than a phone is
+   wide, so below the breakpoint the signature glyph and the spacer are dropped
+   and the id, summary and score keep the row. */
+.ring-row {
+  display: grid;
+  grid-template-columns: 4px 78px minmax(0, 1fr) auto 112px 62px;
+  align-items: center;
+  gap: 14px;
+  height: 58px;
+  padding-right: 18px;
+  transition: background 200ms linear;
+}
+
+@media (max-width: 700px) {
+  .ring-row {
+    grid-template-columns: 4px 62px minmax(0, 1fr) 54px;
+    gap: 10px;
+    padding-right: 12px;
+  }
+  .ring-row__spacer,
+  .ring-row__sig {
+    display: none;
+  }
+}
+
+/* --- results ------------------------------------------------------------ */
+
+.verdict {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+}
+
+.verdict > * + * {
+  border-left: 1px solid var(--rule);
+}
+
+.operating {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 30px;
+  align-items: center;
+}
+
+/* --- workbench ---------------------------------------------------------- */
+
+.workbench {
+  height: 100vh;
+  padding: calc(var(--nav-height) + 26px) 18px 18px;
+  display: grid;
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) minmax(340px, 420px);
+  gap: 14px;
+  min-height: 0;
+}
+
+.workbench > * {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 1240px) {
+  .grid-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Below this the canvas has no room to be a canvas, so the workbench stops
+   being a three-column instrument and becomes a scrolling stack. The graph
+   keeps a fixed height rather than a flex share -- a node-link diagram in a
+   200px-tall box is worse than no diagram. */
+@media (max-width: 1120px) {
+  .workbench {
+    height: auto;
+    min-height: 100vh;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: min-content;
+  }
+  .workbench > * {
+    overflow: visible;
+  }
+  .workbench > *:nth-child(1) {
+    max-height: 60vh;
+  }
+  .workbench > *:nth-child(2) {
+    height: 62vh;
+    min-height: 420px;
+  }
+  .grid-axes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .verdict,
+  .operating {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .verdict > * + * {
+    border-left: none;
+    border-top: 1px solid var(--rule);
+  }
+  .operating {
+    gap: 22px;
+  }
+  .grid-examples {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .grid-examples > * + * {
+    border-left: none;
+    border-top: 1px solid var(--rule);
+  }
+}
+
+@media (max-width: 860px) {
+  .finding {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    padding: 30px 0;
+  }
+  .grid-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .page {
+    padding-inline: 16px;
+  }
+  .grid-axes,
+  .grid-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .workbench {
+    padding: calc(var(--nav-height) + 20px) 12px 12px;
+    gap: 10px;
+  }
+}
+
+/* --- nav ---------------------------------------------------------------- */
+
+/* At 375 the full bar is 363 wide, which fits but leaves 6px of air either
+   side and nothing at all on a 320 device. Below this the wordmark drops to
+   its glyph and the items tighten; the three labels are the part that has to
+   survive. */
+@media (max-width: 430px) {
+  .nav-wordmark {
+    display: none;
+  }
+  .nav-item {
+    padding-inline: 11px !important;
+  }
+  .nav-shell {
+    padding-left: 10px !important;
+  }
+}

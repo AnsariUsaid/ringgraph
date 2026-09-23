@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import json
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -158,7 +157,7 @@ def ring_detail(ring_id: int) -> dict[str, Any]:
         "axes": {axis: float(ring[f"pct_{axis}"]) for axis in AXES},
         "raw": {axis: float(ring[axis]) for axis in AXES},
         "burst_share": float(ring["burst_share"]),
-        "n_shared_attributes": int(len(shared)),
+        "n_shared_attributes": len(shared),
         "shared_attributes": [
             {
                 "id": _attr_id(r["type"], r["value"]),
@@ -344,16 +343,25 @@ def metrics_axes(k: int = Query(50, ge=10, le=300)) -> dict[str, Any]:
 
 
 @app.get("/metrics/sweep")
-def metrics_sweep(model: str = Query("m1_tuned"), points: int = Query(512)) -> dict[str, Any]:
+def metrics_sweep(
+    model: str = Query("m1_tuned", pattern=r"^[A-Za-z0-9_]+$"),
+    points: int = Query(512, ge=16, le=2048),
+) -> dict[str, Any]:
     """Full threshold sweep, so the frontend slider needs no network per frame.
 
     Returning the whole curve once (a few tens of kB) instead of a request per
     drag frame is what keeps the threshold control at 60fps and lets it survive
     a backend hiccup mid-demo (D-25).
     """
+    # `model` is interpolated into a path, so it is pattern-restricted above to
+    # word characters -- otherwise "../.." walks out of the predictions tree.
+    # `points` is bounded because the loop below is O(points x test rows), and
+    # an unbounded value would hang the server on a single request.
     candidates = sorted((paths.PREDS_DIR / f"model={model}").glob("run=*/preds.parquet"))
     if not candidates:
         raise HTTPException(404, f"no predictions for model {model!r}")
+    # Newest run wins. mtime rather than the run key because the key is a hash
+    # of the config, not a timestamp, so it carries no ordering.
     preds = pd.read_parquet(max(candidates, key=lambda p: p.stat().st_mtime))
     test = preds[preds["split"] == "test"]
     y = test["y_true"].to_numpy()
@@ -379,7 +387,3 @@ def metrics_sweep(model: str = Query("m1_tuned"), points: int = Query(512)) -> d
             }
         )
     return {"model": model, "n": len(test), "positives": positives, "sweep": rows}
-
-
-def _report_dir() -> Path:
-    return paths.REPORTS_DIR

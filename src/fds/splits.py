@@ -15,7 +15,6 @@ from __future__ import annotations
 from enum import StrEnum
 from itertools import pairwise
 
-import numpy as np
 import pandas as pd
 
 SECONDS_PER_DAY = 86_400
@@ -90,11 +89,6 @@ def assign_split(day: pd.Series) -> pd.Series:
     for split, (lo, hi) in SPLIT_BOUNDS.items():
         out = out.mask(day.between(lo, hi), str(split))
     return out.astype(pd.CategoricalDtype(categories=[str(s) for s in Split]))
-
-
-def split_mask(day: pd.Series, split: Split) -> np.ndarray:
-    lo, hi = SPLIT_BOUNDS[split]
-    return day.between(lo, hi).to_numpy()
 
 
 def _validate_bounds() -> None:

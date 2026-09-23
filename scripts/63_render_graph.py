@@ -60,8 +60,10 @@ def main() -> None:
     print(f"rendering {graph.number_of_nodes():,} clients, {graph.number_of_edges():,} links")
     print(f"  fraud clients: {int(node_df['is_fraud'].sum()):,}")
 
-    # Components are laid out independently and packed, so 285 separate rings do
-    # not collapse into one unreadable hairball at the centre.
+    # One spring layout over the whole graph. networkx places disconnected
+    # components on a shared canvas without packing them, so the hundreds of
+    # small rings spread out on their own -- which is adequate here only because
+    # the graph is already shattered. It would not be if the graph percolated.
     pos = nx.spring_layout(graph, k=0.35, iterations=60, seed=42)
 
     fig, ax = plt.subplots(figsize=(20, 20), facecolor="#0B0E14")

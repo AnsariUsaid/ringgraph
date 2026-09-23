@@ -63,10 +63,12 @@ def community_table(
     link_columns: tuple[str, ...],
     params: LinkParams,
 ) -> pd.DataFrame:
-    """One row per client, carrying its community's properties.
+    """One row per client *that belongs to a community*.
 
-    Clients with no links have no community and receive NaN, not zero: an
-    isolated client has no group density, and zero would assert one.
+    Clients with no links are simply absent from the returned frame; they pick
+    up NaN later, at the ``merge_asof`` in ``attach_structural_features``. The
+    outcome is what matters -- an isolated client has no group density and zero
+    would assert one -- but this function does not produce the NaN itself.
     """
     edges = build_links(source, UID, columns=link_columns, params=params)
     if edges.empty:

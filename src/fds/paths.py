@@ -9,10 +9,8 @@ picture.
       raw/                                            untouched downloads
       base/transactions.parquet                       immutable wide frame
       uid/recipe=<r>/map.parquet                      narrow [TransactionID, uid]
-      edges/recipe=<r>/hub=<lo>-<hi>/snap=<dddd>/
       snapfeat/recipe=<r>/hub=<lo>-<hi>/snap=<dddd>/
       attach/recipe=<r>/hub=<lo>-<hi>/cadence=<c>/attach.parquet
-      export/kaggle/run=<key>/
     preds/model=<m>/run=<key>/preds.parquet
     reports/
     runs/index.jsonl
@@ -36,10 +34,8 @@ DATA_ROOT = Path(os.environ.get("FDS_DATA_ROOT", PROJECT_ROOT / "data"))
 RAW_DIR = DATA_ROOT / "raw"
 BASE_DIR = DATA_ROOT / "base"
 UID_DIR = DATA_ROOT / "uid"
-EDGES_DIR = DATA_ROOT / "edges"
 SNAPFEAT_DIR = DATA_ROOT / "snapfeat"
 ATTACH_DIR = DATA_ROOT / "attach"
-EXPORT_DIR = DATA_ROOT / "export"
 RINGS_DIR = DATA_ROOT / "rings"
 
 PREDS_DIR = PROJECT_ROOT / "preds"
@@ -80,15 +76,6 @@ def snap_key(end_day_exclusive: int) -> str:
 
 def uid_map_path(recipe: str) -> Path:
     return UID_DIR / f"recipe={recipe}" / "map.parquet"
-
-
-def edges_dir(recipe: str, min_degree: int, max_degree: int, end_day_exclusive: int) -> Path:
-    return (
-        EDGES_DIR
-        / f"recipe={recipe}"
-        / f"hub={hub_key(min_degree, max_degree)}"
-        / f"snap={snap_key(end_day_exclusive)}"
-    )
 
 
 def snapfeat_dir(recipe: str, min_degree: int, max_degree: int, end_day_exclusive: int) -> Path:

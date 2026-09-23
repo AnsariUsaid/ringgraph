@@ -7,8 +7,11 @@ export function riskColor(value: number): string {
   return "var(--risk-0)";
 }
 
-/** Hashes are middle-truncated: reconstructed uids differ at the end, so
- *  cutting the tail makes distinct clients look identical. */
+/** Middle-truncated so both ends stay visible.
+ *
+ *  Not because uids differ at the end -- they are blake2b digests, uniform at
+ *  every position -- but because showing head and tail makes two ids easier to
+ *  tell apart at a glance than a head-only prefix does. */
 export function truncateId(id: string, head = 6, tail = 4): string {
   const bare = id.includes(":") ? id.slice(id.indexOf(":") + 1) : id;
   if (bare.length <= head + tail + 1) return bare;
@@ -19,16 +22,4 @@ export function formatAmount(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}k`;
   return `$${value.toFixed(0)}`;
-}
-
-export const NODE_COLORS: Record<string, string> = {
-  Client: "var(--node-client)",
-  DeviceInfo: "var(--node-device)",
-  id_33: "var(--node-screen)",
-  id_30: "var(--node-os)",
-  id_31: "var(--node-browser)",
-};
-
-export function nodeColor(kind: string): string {
-  return NODE_COLORS[kind] ?? "var(--node-other)";
 }

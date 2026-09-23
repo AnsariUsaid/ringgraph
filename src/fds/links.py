@@ -20,7 +20,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import combinations
 
-import numpy as np
 import pandas as pd
 
 # Identity-block attributes that are independent of every uid recipe, so an edge
@@ -166,8 +165,3 @@ def percolation_report(members: pd.DataFrame) -> dict[str, float | int]:
         "median_component_size": float(sizes.median()),
         "n_components_ge_3": int((sizes >= 3).sum()),
     }
-
-
-def np_seeded_shift(times: np.ndarray, span: float, rng: np.random.Generator) -> np.ndarray:
-    """Circularly shift a client's timestamps, preserving its own burst pattern."""
-    return np.mod(times + rng.uniform(0.0, span), span)

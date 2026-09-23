@@ -142,28 +142,3 @@ def assert_no_denied_features(columns: list[str]) -> None:
             f"target, the temporal position, or snapshot provenance; including "
             f"any of them invalidates the temporal split."
         )
-
-
-def transaction_columns() -> list[str]:
-    """Columns expected in ``train_transaction.csv``, in file order."""
-    return [
-        KEY,
-        TARGET,
-        TIME_RAW,
-        AMOUNT,
-        PRODUCT,
-        *CARD_COLS,
-        *ADDR_COLS,
-        *DIST_COLS,
-        *EMAIL_COLS,
-        *C_COLS,
-        *D_COLS,
-        *M_COLS,
-        *V_COLS,
-    ]
-
-
-def identity_columns() -> list[str]:
-    """Columns expected in ``train_identity.csv``."""
-    ids = sorted(set(ID_NUMERIC_COLS) | set(ID_STRING_COLS))
-    return [KEY, *ids, *DEVICE_COLS]

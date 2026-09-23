@@ -46,6 +46,8 @@ export interface RingDetail extends RingSummary {
   first_day: number;
   last_day: number;
   burst_share: number;
+  /** True total. `shared_attributes` below is capped by the API. */
+  n_shared_attributes: number;
   shared_attributes: SharedAttribute[];
   members: RingMember[];
 }

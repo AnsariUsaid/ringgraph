@@ -5,11 +5,16 @@ import { StatePanel } from "../components/StatePanel";
 import { useSelection } from "../store/selection";
 import { riskColor } from "../lib/risk";
 
+// Every axis the API can sort by. Exposing them is the point: measurement
+// showed the composite ranks below its own best component, and a reader should
+// be able to see that by clicking rather than take it on trust (D-48).
 const SORTS = [
   { key: "composite", label: "Composite" },
-  { key: "synchrony", label: "Synchrony" },
+  { key: "burst_share", label: "Burst" },
+  { key: "synchrony", label: "Sync" },
+  { key: "density", label: "Density" },
+  { key: "tightness", label: "Amount" },
   { key: "n_clients", label: "Size" },
-  { key: "n_transactions", label: "Volume" },
 ];
 
 export function RingList({ sort, onSortChange }: { sort: string; onSortChange: (s: string) => void }) {

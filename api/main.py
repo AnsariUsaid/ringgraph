@@ -158,6 +158,7 @@ def ring_detail(ring_id: int) -> dict[str, Any]:
         "axes": {axis: float(ring[f"pct_{axis}"]) for axis in AXES},
         "raw": {axis: float(ring[axis]) for axis in AXES},
         "burst_share": float(ring["burst_share"]),
+        "n_shared_attributes": int(len(shared)),
         "shared_attributes": [
             {
                 "id": _attr_id(r["type"], r["value"]),

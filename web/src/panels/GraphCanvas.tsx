@@ -18,7 +18,6 @@ cytoscape.use(fcose);
 export function GraphCanvas() {
   const ringId = useSelection((s) => s.ringId);
   const focusedAttribute = useSelection((s) => s.focusedAttribute);
-  const setHovered = useSelection((s) => s.setHovered);
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
 
@@ -99,8 +98,10 @@ export function GraphCanvas() {
       ],
     });
 
-    cy.on("mouseover", "node", (event) => setHovered(event.target.id()));
-    cy.on("mouseout", "node", () => setHovered(null));
+    // Hover toggles a class directly and never touches React state: it fires on
+    // mousemove, and a render per pixel would re-reconcile the whole canvas.
+    cy.on("mouseover", "node", (event) => event.target.addClass("hovered"));
+    cy.on("mouseout", "node", (event) => event.target.removeClass("hovered"));
     cyRef.current = cy;
 
     // A Cytoscape container inside a CSS grid reliably mounts at zero height,
@@ -116,7 +117,7 @@ export function GraphCanvas() {
       cy.destroy();
       cyRef.current = null;
     };
-  }, [setHovered]);
+  }, []);
 
   useEffect(() => {
     const cy = cyRef.current;
@@ -126,15 +127,25 @@ export function GraphCanvas() {
       cy.add(data.elements as cytoscape.ElementDefinition[]);
       cy.nodes('[kind != "Client"]').addClass("labelled");
     });
-    cy.layout({
+    // fcose is asynchronous. Calling cy.fit() on the next line framed the
+    // graph against randomised pre-layout positions, and the view only looked
+    // right if the ResizeObserver happened to fire afterwards -- visible on
+    // every ring selection. Fit on layoutstop instead, and stop the run on
+    // cleanup so switching rings mid-layout cannot animate against removed
+    // elements.
+    const layout = cy.layout({
       name: "fcose",
       quality: "default",
       randomize: true,
       animate: data.elements.length < 300 ? "end" : false,
       nodeSeparation: 90,
       idealEdgeLength: 70,
-    } as cytoscape.LayoutOptions).run();
-    cy.fit(cy.elements(), 40);
+    } as cytoscape.LayoutOptions);
+    layout.one("layoutstop", () => cy.fit(cy.elements(), 40));
+    layout.run();
+    return () => {
+      layout.stop();
+    };
   }, [data]);
 
   // Attribute focus dims everything except that attribute's mediated edges.

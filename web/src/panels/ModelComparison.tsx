@@ -100,11 +100,28 @@ export function ModelComparison() {
             );
           })}
           <div style={{ fontSize: 11, color: "var(--fg-muted)", lineHeight: 1.6 }}>
-            Every interval spans zero. {models.data.seed_note}
+            {(() => {
+              // Derived, not asserted. This panel's whole claim is that it
+              // reports the result as it came out, so the sentence has to
+              // follow the data rather than restate what it happened to be.
+              const results = Object.values(models.data.structural);
+              const spanning = results.filter(
+                (r) => Math.abs(r.mean_diff) < r.sd_diff / Math.sqrt(r.n_seeds) * 2.776,
+              ).length;
+              return spanning === results.length
+                ? "Every interval spans zero."
+                : `${spanning} of ${results.length} intervals span zero.`;
+            })()}{" "}
+            {models.data.seed_note}
           </div>
         </div>
       )}
 
+      {axes.isError && (
+        <div style={{ fontSize: 11, color: "var(--fg-muted)", marginBottom: 14 }}>
+          Axis metrics unavailable.
+        </div>
+      )}
       {axes.data && (
         <>
           <div className="caps" style={{ marginBottom: 2 }}>
@@ -143,6 +160,11 @@ export function ModelComparison() {
         </>
       )}
 
+      {sweep.isError && (
+        <div style={{ fontSize: 11, color: "var(--fg-muted)" }}>
+          Threshold sweep unavailable — no prediction table for this model.
+        </div>
+      )}
       {operating && sweep.data && (
         <>
           <div className="caps" style={{ marginBottom: 6 }}>

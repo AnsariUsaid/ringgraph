@@ -105,7 +105,7 @@ export function EvidencePanel() {
             what makes the panel legible in the first two seconds. */}
         <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginTop: 8, lineHeight: 1.6 }}>
           <span className="mono">{ring.n_clients}</span> clients sharing{" "}
-          <span className="mono">{ring.shared_attributes.length}</span> attributes,{" "}
+          <span className="mono">{ring.n_shared_attributes}</span> attributes,{" "}
           <span className="mono">{ring.n_transactions}</span> transactions
           {hours !== null && (
             <>
@@ -147,6 +147,11 @@ export function EvidencePanel() {
 
       <Section title="What links them">
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          {ring.shared_attributes.length < ring.n_shared_attributes && (
+            <span style={{ fontSize: 11, color: "var(--fg-muted)", alignSelf: "center" }}>
+              showing {Math.min(10, ring.shared_attributes.length)} of {ring.n_shared_attributes}
+            </span>
+          )}
           {ring.shared_attributes.slice(0, 10).map((attribute) => {
             const active = focusedAttribute === attribute.id;
             return (
@@ -177,7 +182,11 @@ export function EvidencePanel() {
       </Section>
 
       <Section title="Timing">
-        {timeline.data ? (
+        {timeline.isError ? (
+          <div style={{ fontSize: 11, color: "var(--fg-muted)", height: 120 }}>
+            Timeline unavailable.
+          </div>
+        ) : timeline.data ? (
           <TemporalStrip data={timeline.data} />
         ) : (
           <div style={{ height: 120 }} />

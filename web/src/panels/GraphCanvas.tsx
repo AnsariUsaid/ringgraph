@@ -18,6 +18,8 @@ cytoscape.use(fcose);
 export function GraphCanvas() {
   const ringId = useSelection((s) => s.ringId);
   const focusedAttribute = useSelection((s) => s.focusedAttribute);
+  const selectedNodeId = useSelection((s) => s.selectedNodeId);
+  const setSelectedNode = useSelection((s) => s.setSelectedNode);
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   // fcose runs asynchronously, so an in-flight layout has to be stopped
@@ -121,6 +123,10 @@ export function GraphCanvas() {
           },
         },
         { selector: ".dimmed", style: { opacity: 0.09 } },
+        {
+          selector: ".picked",
+          style: { "border-width": 3, "border-color": "#3b2bd9", "overlay-opacity": 0 },
+        },
         { selector: ".hovered", style: { "border-width": 3, "border-color": "#3b2bd9" } },
       ],
     });
@@ -129,6 +135,12 @@ export function GraphCanvas() {
     // mousemove, and a render per pixel would re-reconcile the whole canvas.
     cy.on("mouseover", "node", (event) => event.target.addClass("hovered"));
     cy.on("mouseout", "node", (event) => event.target.removeClass("hovered"));
+    // Selection goes through React because a side panel renders from it; hover
+    // does not, because it fires on mousemove. A tap on empty canvas clears it.
+    cy.on("tap", "node", (event) => setSelectedNode(event.target.id()));
+    cy.on("tap", (event) => {
+      if (event.target === cy) setSelectedNode(null);
+    });
     cyRef.current = cy;
 
     // A Cytoscape container inside a CSS grid reliably mounts at zero height,
@@ -146,7 +158,7 @@ export function GraphCanvas() {
       cy.destroy();
       cyRef.current = null;
     };
-  }, []);
+  }, [setSelectedNode]);
 
   useEffect(() => {
     const cy = cyRef.current;
@@ -200,6 +212,17 @@ export function GraphCanvas() {
     query.addEventListener("change", apply);
     return () => query.removeEventListener("change", apply);
   }, [data]);
+
+  // Selection is a class toggle inside cy.batch: no React reconciliation and no
+  // relayout, which is the whole reason the canvas stays responsive.
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.batch(() => {
+      cy.elements().removeClass("picked");
+      if (selectedNodeId) cy.getElementById(selectedNodeId).addClass("picked");
+    });
+  }, [selectedNodeId, data]);
 
   // Attribute focus dims everything except that attribute's mediated edges.
   useEffect(() => {
@@ -294,7 +317,7 @@ export function GraphCanvas() {
               pointerEvents: "none",
             }}
           >
-            {data.n_nodes} clients · {data.elements.length - data.n_nodes} links &amp; attributes
+            {data.n_nodes} clients · {data.elements.length - data.n_nodes} links &amp; attributes · click a node for detail
           </div>
         </>
       )}

@@ -32,10 +32,10 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   const target = hovered ?? active;
-  // The indicator is dark ink when it sits on the committed route and a light
-  // wash when it is previewing a hover. Labels may only invert under the dark
+  // The indicator is solid accent when it sits on the committed route and a light
+  // wash when it is previewing a hover. Labels may only invert under the solid
   // one -- previously "active" alone decided it, so hovering a *different*
-  // item slid the dark pill away and left the active label white on paper,
+  // item slid the solid pill away and left the active label white on paper,
   // invisible until the pointer came back.
   const previewing = hovered !== null && hovered !== active;
 
@@ -145,7 +145,7 @@ export function Navbar() {
                 bottom: 0,
                 width: box.w,
                 borderRadius: 999,
-                background: previewing ? "var(--accent-wash)" : "var(--ink)",
+                background: previewing ? "var(--accent-wash)" : "var(--accent)",
                 // Translating a fixed-origin element rather than animating
                 // `left` keeps this on the compositor.
                 transform: `translate3d(${box.x}px, 0, 0)`,
@@ -179,7 +179,7 @@ export function Navbar() {
                   fontWeight: 500,
                   whiteSpace: "nowrap",
                   // Three states, all legible: the committed route inverts to
-                  // paper under the dark pill; while a hover is previewing, the
+                  // paper under the accent pill; while a hover is previewing, the
                   // committed route keeps the accent ("you are here") and the
                   // previewed one goes full ink on its wash, so the two are
                   // never the same colour at the same time.

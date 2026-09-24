@@ -3,6 +3,7 @@ import { api, queryKeys } from "../api/client";
 import { AXIS_ORDER, type AxisName } from "../api/types";
 import { RiskSignature } from "../components/RiskSignature";
 import { StatePanel } from "../components/StatePanel";
+import { NodeDetail } from "./NodeDetail";
 import { TemporalStrip } from "./TemporalStrip";
 import { formatAmount, riskColor, truncateId } from "../lib/risk";
 import { useSelection } from "../store/selection";
@@ -70,10 +71,17 @@ export function EvidencePanel() {
   const ringId = useSelection((s) => s.ringId);
   const focusedAttribute = useSelection((s) => s.focusedAttribute);
   const setFocusedAttribute = useSelection((s) => s.setFocusedAttribute);
+  const selectedNodeId = useSelection((s) => s.selectedNodeId);
 
   const detail = useQuery({
     queryKey: queryKeys.ring(ringId ?? -1),
     queryFn: () => api.ring(ringId as number),
+    enabled: ringId !== null,
+  });
+  // Same key as the canvas, so this reads its cached copy rather than fetching.
+  const subgraph = useQuery({
+    queryKey: queryKeys.subgraph(ringId ?? -1),
+    queryFn: () => api.subgraph(ringId as number),
     enabled: ringId !== null,
   });
   const timeline = useQuery({
@@ -93,6 +101,9 @@ export function EvidencePanel() {
 
   return (
     <div className="scroll" style={{ height: "100%" }}>
+      {selectedNodeId && subgraph.data && (
+        <NodeDetail nodeId={selectedNodeId} ring={ring} elements={subgraph.data.elements} />
+      )}
       <div style={{ padding: "18px 18px 16px" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14 }}>
           <div>

@@ -64,17 +64,6 @@
   }
 }
 
-@keyframes ripple {
-  from {
-    transform: scale(0);
-    opacity: 0.32;
-  }
-  to {
-    transform: scale(2.4);
-    opacity: 0;
-  }
-}
-
 @keyframes drift {
   0%,
   100% {
@@ -285,5 +274,72 @@
   .fig-slide {
     animation: none;
     stroke-dasharray: none;
+  }
+}
+
+/* --- reveal-driven transforms -------------------------------------------
+ *
+ * `Reveal` toggles `is-in` on its own element only. Children opt in through
+ * these classes and inherit that moment, which is what lets a bar grow or a
+ * dot land *as its section arrives* rather than animating unseen on mount --
+ * the reason the axis bars had a width transition that never once played.
+ *
+ * `--i` staggers siblings without a style prop per element.
+ */
+
+.on-reveal-growx,
+.on-reveal-growc {
+  transform: scaleX(0);
+  transition: transform 820ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+.on-reveal-growx {
+  transform-origin: left center;
+}
+
+/* Centre origin, for marks that are centred on a zero line and should open
+   outwards in both directions rather than sweep in from one side. */
+.on-reveal-growc {
+  transform-origin: center;
+}
+
+.reveal.is-in .on-reveal-growx,
+.reveal.is-in .on-reveal-growc {
+  transform: scaleX(1);
+}
+
+.on-reveal-pop {
+  transform: scale(0);
+  transition: transform 520ms var(--ease-spring);
+  transition-delay: calc(var(--i, 0) * 55ms + 300ms);
+}
+
+.reveal.is-in .on-reveal-pop {
+  transform: scale(1);
+}
+
+.on-reveal-rise {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  transition:
+    opacity 620ms var(--ease-out),
+    transform 620ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+
+.reveal.is-in .on-reveal-rise {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .on-reveal-growx,
+  .on-reveal-growc,
+  .on-reveal-pop,
+  .on-reveal-rise {
+    transform: none;
+    opacity: 1;
+    transition: none;
   }
 }

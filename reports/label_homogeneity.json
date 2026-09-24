@@ -1,0 +1,62 @@
+{
+  "v1_card1_addr1_d1n": {
+    "observed": {
+      "n_clients": 217850,
+      "n_singleton_clients": 125222,
+      "pure_share_all_clients": 0.9857149414734909,
+      "n_clients_size_ge_2": 92628,
+      "pure_share_size_ge_2": 0.9664032473981949,
+      "all_fraud_share_size_ge_2": 0.021483784600768666,
+      "mixed_share_size_ge_2": 0.03359675260180506,
+      "fraud_share_inside_all_fraud_clients": 0.584087499395054
+    },
+    "null": {
+      "null_mean_pure_share_size_ge_2": 0.8513667573519887,
+      "null_std_pure_share_size_ge_2": 0.0006711141315112615,
+      "null_min_pure_share_size_ge_2": 0.8500021591743318,
+      "null_max_pure_share_size_ge_2": 0.8525823725007557,
+      "n_permutations": 20
+    },
+    "excess_purity": 0.1150364900462062
+  },
+  "v2_plus_card2": {
+    "observed": {
+      "n_clients": 219974,
+      "n_singleton_clients": 127140,
+      "pure_share_all_clients": 0.9858483275296172,
+      "n_clients_size_ge_2": 92834,
+      "pure_share_size_ge_2": 0.9664670271667708,
+      "all_fraud_share_size_ge_2": 0.021640778163172975,
+      "mixed_share_size_ge_2": 0.0335329728332292,
+      "fraud_share_inside_all_fraud_clients": 0.590620916614238
+    },
+    "null": {
+      "null_mean_pure_share_size_ge_2": 0.8519378675916152,
+      "null_std_pure_share_size_ge_2": 0.0007533420944556932,
+      "null_min_pure_share_size_ge_2": 0.8502057435853243,
+      "null_max_pure_share_size_ge_2": 0.8535234935476227,
+      "n_permutations": 20
+    },
+    "excess_purity": 0.11452915957515564
+  },
+  "v3_plus_email": {
+    "observed": {
+      "n_clients": 275841,
+      "n_singleton_clients": 179426,
+      "pure_share_all_clients": 0.9920968964004626,
+      "n_clients_size_ge_2": 96415,
+      "pure_share_size_ge_2": 0.9773894103614583,
+      "all_fraud_share_size_ge_2": 0.027640927241611782,
+      "mixed_share_size_ge_2": 0.022610589638541678,
+      "fraud_share_inside_all_fraud_clients": 0.7482456564874413
+    },
+    "null": {
+      "null_mean_pure_share_size_ge_2": 0.8688834724887207,
+      "null_std_pure_share_size_ge_2": 0.000670260000104622,
+      "null_min_pure_share_size_ge_2": 0.8678110252554063,
+      "null_max_pure_share_size_ge_2": 0.8701654306902453,
+      "n_permutations": 20
+    },
+    "excess_purity": 0.10850593787273766
+  }
+}

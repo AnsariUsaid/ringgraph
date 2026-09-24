@@ -1,0 +1,8 @@
+{
+  "detector": {
+    "observed_lift": 1.4479594634430923,
+    "shuffled_mean": 0.9663915612581386,
+    "shuffled_sd": 0.12911706322530428,
+    "collapses": true
+  }
+}

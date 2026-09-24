@@ -1,0 +1,50 @@
+{
+  "v1_card1_addr1_d1n": {
+    "n_clients": 217850,
+    "n_linked_clients": 5312,
+    "n_components": 803,
+    "largest_component_share": 0.3072289156626506,
+    "n_rings": 550,
+    "n_fraud_rings": 112,
+    "ring_fraud_baseline": 0.20363636363636364,
+    "client_fraud_rate": 0.19256614867702646,
+    "enrichment_burst": 1.6945646559145955,
+    "enrichment_burst_small_rings": 2.7240274599542333,
+    "enrichment_size": 1.4455052948609854,
+    "enrichment_size_small_rings": 0.95529699938763,
+    "enrichment_composite": 1.2807111910165345,
+    "trap_a_excess_purity": 0.11542730060025042
+  },
+  "v2_plus_card2": {
+    "n_clients": 219974,
+    "n_linked_clients": 5323,
+    "n_components": 805,
+    "largest_component_share": 0.30603043396580876,
+    "n_rings": 555,
+    "n_fraud_rings": 114,
+    "ring_fraud_baseline": 0.20540540540540542,
+    "client_fraud_rate": 0.19279882771613985,
+    "enrichment_burst": 1.7744156808960512,
+    "enrichment_burst_small_rings": 2.824561403508772,
+    "enrichment_size": 1.4466623359643125,
+    "enrichment_size_small_rings": 0.9448356807511736,
+    "enrichment_composite": 1.2611626730920826,
+    "trap_a_excess_purity": 0.11469576520096803
+  },
+  "v3_plus_email": {
+    "n_clients": 275841,
+    "n_linked_clients": 5657,
+    "n_components": 1012,
+    "largest_component_share": 0.08714866537033764,
+    "n_rings": 711,
+    "n_fraud_rings": 142,
+    "ring_fraud_baseline": 0.19971870604781997,
+    "client_fraud_rate": 0.15076373735369966,
+    "enrichment_burst": 1.8120794899620183,
+    "enrichment_burst_small_rings": 2.021860040124744,
+    "enrichment_size": 1.2920617736323934,
+    "enrichment_size_small_rings": 1.1594540783558123,
+    "enrichment_composite": 1.791521408021662,
+    "trap_a_excess_purity": 0.10838147591142466
+  }
+}

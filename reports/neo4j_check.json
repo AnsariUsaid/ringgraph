@@ -1,0 +1,55 @@
+{
+  "Neo4j Kernel": {
+    "version": "2026.06.0",
+    "edition": "enterprise"
+  },
+  "Cypher": {
+    "version": "5",
+    "edition": ""
+  },
+  "gds_version": "2026.06.0",
+  "algorithms": [
+    "gds.leiden.mutate",
+    "gds.leiden.mutate.estimate",
+    "gds.leiden.stats",
+    "gds.leiden.stats.estimate",
+    "gds.leiden.stream",
+    "gds.leiden.stream.estimate",
+    "gds.leiden.write",
+    "gds.leiden.write.estimate",
+    "gds.louvain.mutate",
+    "gds.louvain.mutate.estimate",
+    "gds.louvain.stats",
+    "gds.louvain.stats.estimate",
+    "gds.louvain.stream",
+    "gds.louvain.stream.estimate",
+    "gds.louvain.write",
+    "gds.louvain.write.estimate",
+    "gds.pageRank.mutate",
+    "gds.pageRank.mutate.estimate",
+    "gds.pageRank.stats",
+    "gds.pageRank.stats.estimate",
+    "gds.pageRank.stream",
+    "gds.pageRank.stream.estimate",
+    "gds.pageRank.write",
+    "gds.pageRank.write.estimate",
+    "gds.wcc.mutate",
+    "gds.wcc.mutate.estimate",
+    "gds.wcc.stats",
+    "gds.wcc.stats.estimate",
+    "gds.wcc.stream",
+    "gds.wcc.stream.estimate",
+    "gds.wcc.write",
+    "gds.wcc.write.estimate"
+  ],
+  "memory": [
+    {
+      "name": "server.memory.heap.max_size",
+      "value": "1.00GiB"
+    },
+    {
+      "name": "server.memory.pagecache.size",
+      "value": "512.00MiB"
+    }
+  ]
+}

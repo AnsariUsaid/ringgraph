@@ -1,0 +1,142 @@
+{
+  "run_key": "4b9f198e",
+  "attach": "/Users/usaid/Desktop/FDS-Project/data/attach/recipe=v1_card1_addr1_d1n/hub=2-50/cadence=7/attach.parquet",
+  "n_features": 439,
+  "structural_features": [
+    "st_degree",
+    "st_weighted_degree",
+    "st_triangles",
+    "st_clustering",
+    "st_two_hop_size",
+    "st_pagerank",
+    "st_component_size",
+    "st_max_edge_weight"
+  ],
+  "has_structure_share": 0.3945270430453483,
+  "metrics": {
+    "val": {
+      "n": 86672,
+      "n_positive": 2949,
+      "prevalence": 0.03402482924127746,
+      "roc_auc": 0.9169688882699046,
+      "pr_auc": 0.5558864526464052,
+      "tpr_at_fpr_1pct": 0.474059003051882,
+      "threshold_at_fpr_1pct": 0.780999833383739,
+      "tpr_at_fpr_0.1pct": 0.23329942353340116,
+      "threshold_at_fpr_0.1pct": 0.9670307436631557
+    },
+    "test": {
+      "n": 89326,
+      "n_positive": 3114,
+      "prevalence": 0.03486107068490697,
+      "roc_auc": 0.8862830215762724,
+      "pr_auc": 0.49800890486908705,
+      "tpr_at_fpr_1pct": 0.4142581888246628,
+      "threshold_at_fpr_1pct": 0.8054316805344314,
+      "tpr_at_fpr_0.1pct": 0.24855491329479767,
+      "threshold_at_fpr_0.1pct": 0.9638276562591012
+    }
+  },
+  "top_features": [
+    {
+      "feature": "V258",
+      "gain": 674725.7836151123,
+      "share": 0.1452791932483587
+    },
+    {
+      "feature": "V70",
+      "gain": 381051.7150917053,
+      "share": 0.08204649518181902
+    },
+    {
+      "feature": "C13",
+      "gain": 301329.63121795654,
+      "share": 0.0648810624823285
+    },
+    {
+      "feature": "V294",
+      "gain": 242616.61981201172,
+      "share": 0.052239217250721
+    },
+    {
+      "feature": "D2",
+      "gain": 186956.1618118286,
+      "share": 0.04025463532059949
+    },
+    {
+      "feature": "TransactionAmt",
+      "gain": 162283.73471069336,
+      "share": 0.034942269331668295
+    },
+    {
+      "feature": "P_emaildomain",
+      "gain": 159182.65453338623,
+      "share": 0.0342745574444127
+    },
+    {
+      "feature": "DeviceInfo",
+      "gain": 158171.06487846375,
+      "share": 0.03405674610159116
+    },
+    {
+      "feature": "C8",
+      "gain": 144034.9829597473,
+      "share": 0.031013022819163096
+    },
+    {
+      "feature": "card1",
+      "gain": 130926.02298355103,
+      "share": 0.028190455228129418
+    },
+    {
+      "feature": "card2",
+      "gain": 118699.04689788818,
+      "share": 0.02555779279736428
+    },
+    {
+      "feature": "id_31",
+      "gain": 116596.3607673645,
+      "share": 0.02510505102861153
+    },
+    {
+      "feature": "addr1",
+      "gain": 95488.72211456299,
+      "share": 0.020560240693327056
+    },
+    {
+      "feature": "C1",
+      "gain": 89689.99426651001,
+      "share": 0.019311682354384904
+    },
+    {
+      "feature": "id_33",
+      "gain": 65674.34767532349,
+      "share": 0.014140731655848223
+    },
+    {
+      "feature": "D15",
+      "gain": 61756.00606536865,
+      "share": 0.01329705038296769
+    },
+    {
+      "feature": "R_emaildomain",
+      "gain": 57696.92872619629,
+      "share": 0.012423066469075879
+    },
+    {
+      "feature": "id_30",
+      "gain": 57276.18352890015,
+      "share": 0.012332473335819875
+    },
+    {
+      "feature": "card6",
+      "gain": 51211.47340011597,
+      "share": 0.01102664478118217
+    },
+    {
+      "feature": "D10",
+      "gain": 49584.61554336548,
+      "share": 0.01067635640818991
+    }
+  ]
+}

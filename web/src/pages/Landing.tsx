@@ -113,25 +113,32 @@ export function Landing() {
           style={{
             position: "absolute",
             inset: 0,
-            opacity: 0.55,
+            opacity: 0.4,
             // Faded at the edges so the grid reads as a drafting surface the
             // content sits on, not a box it is trapped in.
             maskImage: "radial-gradient(ellipse 85% 75% at 50% 42%, #000 35%, transparent 100%)",
             WebkitMaskImage: "radial-gradient(ellipse 85% 75% at 50% 42%, #000 35%, transparent 100%)",
           }}
         />
-        <div style={{ position: "absolute", inset: 0, opacity: 0.85 }}>
+        <div style={{ position: "absolute", inset: 0 }}>
           <Constellation />
         </div>
         {/* Scrim: the canvas runs under the headline, and without this the
-            drifting nodes cross the type and cost it contrast. */}
+            drifting nodes cross the type and cost it contrast.
+
+            Tight and steep rather than broad and soft. The earlier version
+            washed 0.94 paper across most of the hero, which protected type
+            that was never at risk out near the edges and hid the ring
+            formations along with it. This clears almost completely by 60% of
+            the radius, so the field is fully visible everywhere except
+            directly behind the words. */}
         <div
           aria-hidden
           style={{
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(ellipse 55% 48% at 50% 46%, rgba(244,241,234,0.94) 30%, rgba(244,241,234,0.55) 62%, transparent 85%)",
+              "radial-gradient(ellipse 44% 38% at 50% 47%, rgba(244,241,234,0.9) 22%, rgba(244,241,234,0.4) 58%, transparent 78%)",
           }}
         />
 

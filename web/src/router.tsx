@@ -14,8 +14,13 @@ export const ROUTES = ["/", "/explore", "/results"] as const;
 export type Route = (typeof ROUTES)[number];
 
 /** How long the exit animation runs before the next page mounts. Matches the
- *  `page-out` keyframe; the wipe covers the swap itself. */
-const EXIT_MS = 190;
+ *  `page-out` keyframe; the wipe covers the swap itself.
+ *
+ *  Measured at 190 this put the new page on screen 208ms after the click,
+ *  which is past the ~100ms where a response still reads as instant. The exit
+ *  only has to hide the swap, and the 620ms wipe is doing most of that work
+ *  anyway, so it is cut to a length that is felt rather than waited through. */
+const EXIT_MS = 110;
 
 function normalise(pathname: string): Route {
   const trimmed = pathname.replace(/\/+$/, "") || "/";
@@ -85,11 +90,24 @@ export function useRouter(): RouterValue {
 
 /** A real anchor, so the link has a URL, opens in a new tab on cmd-click, and
  *  shows a destination in the status bar. Only plain left clicks are
- *  intercepted. */
+ *  intercepted.
+ *
+ *  `onClick` is destructured out of `rest` rather than left in it, because
+ *  `{...rest}` is spread *after* the handler below: left in, any caller
+ *  passing its own onClick silently replaced this one, `preventDefault` never
+ *  ran, and the link fell through to a full browser page load -- a fresh
+ *  module graph, a fresh React tree and a refetch of every query. It cost the
+ *  navbar exactly that until it was found, and the next caller to pass an
+ *  onClick would have hit it again.
+ *
+ *  The caller's handler runs first and can opt out of client-side routing by
+ *  calling preventDefault itself.
+ */
 export function Link({
   to,
   children,
   ref,
+  onClick,
   ...rest
 }: { to: Route; children: React.ReactNode; ref?: React.Ref<HTMLAnchorElement> } & Omit<
   React.AnchorHTMLAttributes<HTMLAnchorElement>,
@@ -100,13 +118,14 @@ export function Link({
     <a
       ref={ref}
       href={to}
+      {...rest}
       onClick={(event) => {
+        onClick?.(event);
+        if (event.defaultPrevented) return;
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
         event.preventDefault();
         navigate(to);
-        rest.onClick?.(event);
       }}
-      {...rest}
     >
       {children}
     </a>

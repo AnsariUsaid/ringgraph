@@ -86,7 +86,7 @@ function Pages() {
         style={{
           animation:
             phase === "out"
-              ? "page-out 190ms var(--ease-out) forwards"
+              ? "page-out 110ms var(--ease-out) forwards"
               : "page-in 420ms var(--ease-out) both",
         }}
       >

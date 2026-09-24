@@ -30,7 +30,6 @@ export function Navbar() {
   const [hovered, setHovered] = useState<Route | null>(null);
   const [box, setBox] = useState<{ x: number; w: number } | null>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [ripple, setRipple] = useState<{ id: number; x: number; y: number } | null>(null);
 
   const target = hovered ?? active;
   // The indicator is dark ink when it sits on the committed route and a light
@@ -157,25 +156,6 @@ export function Navbar() {
             />
           )}
 
-          {ripple && (
-            <span
-              key={ripple.id}
-              aria-hidden
-              onAnimationEnd={() => setRipple(null)}
-              style={{
-                position: "absolute",
-                left: ripple.x - 48,
-                top: ripple.y - 48,
-                width: 96,
-                height: 96,
-                borderRadius: "50%",
-                background: "var(--accent)",
-                animation: "ripple 620ms var(--ease-out) forwards",
-                pointerEvents: "none",
-              }}
-            />
-          )}
-
           {ITEMS.map((item) => {
             const isActive = item.to === active;
             const inverted = !previewing && item.to === target;
@@ -191,12 +171,6 @@ export function Navbar() {
                   else itemRefs.current.delete(item.to);
                 }}
                 onMouseEnter={() => setHovered(item.to)}
-                onClick={(event) => {
-                  const rect = listRef.current?.getBoundingClientRect();
-                  if (rect) {
-                    setRipple({ id: Date.now(), x: event.clientX - rect.left, y: event.clientY - rect.top });
-                  }
-                }}
                 style={{
                   position: "relative",
                   padding: "10px 52px",

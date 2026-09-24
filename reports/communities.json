@@ -1,0 +1,17 @@
+{
+  "gamma": 1.0,
+  "projection": {
+    "graph": "client_links",
+    "nodes": 1628,
+    "relationships": 14352
+  },
+  "profile": {
+    "n_communities": 285,
+    "n_clients": 1628,
+    "largest_community": 59,
+    "largest_community_share": 0.03624078624078624,
+    "median_size": 3.0,
+    "n_communities_ge_3": 169,
+    "n_communities_ge_5": 91
+  }
+}

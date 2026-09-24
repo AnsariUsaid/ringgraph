@@ -1,0 +1,104 @@
+{
+  "recipe": "v1_card1_addr1_d1n",
+  "attributes": {
+    "card1": {
+      "n_groups": 8581,
+      "n_client_links": 171880,
+      "subpopulation_fraud_rate": 0.038683965557365606,
+      "groups_ge_2_fraud_observed": 650,
+      "groups_ge_2_fraud_null_mean": 950.0,
+      "groups_ge_2_fraud_sd_away": -17.52618713510958,
+      "groups_ge_3_fraud_observed": 412,
+      "groups_ge_3_fraud_null_mean": 570.12,
+      "groups_ge_3_fraud_sd_away": -11.198704708979005
+    },
+    "card2": {
+      "n_groups": 460,
+      "n_client_links": 55846,
+      "subpopulation_fraud_rate": 0.046833546896713533,
+      "groups_ge_2_fraud_observed": 180,
+      "groups_ge_2_fraud_null_mean": 337.36,
+      "groups_ge_2_fraud_sd_away": -19.507104928994153,
+      "groups_ge_3_fraud_observed": 125,
+      "groups_ge_3_fraud_null_mean": 270.36,
+      "groups_ge_3_fraud_sd_away": -20.07944227401161
+    },
+    "addr1": {
+      "n_groups": 147,
+      "n_client_links": 12146,
+      "subpopulation_fraud_rate": 0.04001317306109007,
+      "groups_ge_2_fraud_observed": 37,
+      "groups_ge_2_fraud_null_mean": 32.48,
+      "groups_ge_2_fraud_sd_away": 1.92558473924722,
+      "groups_ge_3_fraud_observed": 33,
+      "groups_ge_3_fraud_null_mean": 26.32,
+      "groups_ge_3_fraud_sd_away": 3.1281966106828576
+    },
+    "P_emaildomain": {
+      "n_groups": 43,
+      "n_client_links": 8050,
+      "subpopulation_fraud_rate": 0.07532500637267397,
+      "groups_ge_2_fraud_observed": 30,
+      "groups_ge_2_fraud_null_mean": 39.08,
+      "groups_ge_2_fraud_sd_away": -8.430568353238154,
+      "groups_ge_3_fraud_observed": 23,
+      "groups_ge_3_fraud_null_mean": 37.04,
+      "groups_ge_3_fraud_sd_away": -11.31375441491634
+    },
+    "R_emaildomain": {
+      "n_groups": 53,
+      "n_client_links": 8959,
+      "subpopulation_fraud_rate": 0.1172854387656702,
+      "groups_ge_2_fraud_observed": 32,
+      "groups_ge_2_fraud_null_mean": 45.68,
+      "groups_ge_2_fraud_sd_away": -7.250385499243501,
+      "groups_ge_3_fraud_observed": 23,
+      "groups_ge_3_fraud_null_mean": 41.44,
+      "groups_ge_3_fraud_sd_away": -10.490149486349306
+    },
+    "DeviceInfo": {
+      "n_groups": 1247,
+      "n_client_links": 19936,
+      "subpopulation_fraud_rate": 0.1987736727724309,
+      "groups_ge_2_fraud_observed": 577,
+      "groups_ge_2_fraud_null_mean": 523.76,
+      "groups_ge_2_fraud_sd_away": 5.671966554951137,
+      "groups_ge_3_fraud_observed": 449,
+      "groups_ge_3_fraud_null_mean": 355.04,
+      "groups_ge_3_fraud_sd_away": 10.129611920350342
+    },
+    "id_31": {
+      "n_groups": 95,
+      "n_client_links": 12633,
+      "subpopulation_fraud_rate": 0.16838871823512985,
+      "groups_ge_2_fraud_observed": 85,
+      "groups_ge_2_fraud_null_mean": 81.2,
+      "groups_ge_2_fraud_sd_away": 2.744797450355536,
+      "groups_ge_3_fraud_observed": 79,
+      "groups_ge_3_fraud_null_mean": 76.8,
+      "groups_ge_3_fraud_sd_away": 1.3266499161421617
+    },
+    "id_33": {
+      "n_groups": 139,
+      "n_client_links": 7712,
+      "subpopulation_fraud_rate": 0.06752931661949049,
+      "groups_ge_2_fraud_observed": 41,
+      "groups_ge_2_fraud_null_mean": 43.96,
+      "groups_ge_2_fraud_sd_away": -1.0439115114707256,
+      "groups_ge_3_fraud_observed": 32,
+      "groups_ge_3_fraud_null_mean": 33.6,
+      "groups_ge_3_fraud_sd_away": -0.9954736269412091
+    },
+    "DeviceFP": {
+      "n_groups": 1453,
+      "n_client_links": 37141,
+      "subpopulation_fraud_rate": 0.04548557244802979,
+      "groups_ge_2_fraud_observed": 246,
+      "groups_ge_2_fraud_null_mean": 192.76,
+      "groups_ge_2_fraud_sd_away": 8.156414115408253,
+      "groups_ge_3_fraud_observed": 172,
+      "groups_ge_3_fraud_null_mean": 125.84,
+      "groups_ge_3_fraud_sd_away": 7.660773307441828
+    }
+  }
+}

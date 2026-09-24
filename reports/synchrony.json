@@ -1,0 +1,136 @@
+{
+  "recipe": "v1_card1_addr1_d1n",
+  "params": {
+    "min_degree": 2,
+    "max_degree": 50,
+    "min_weight": 2
+  },
+  "percolation": {
+    "n_components": 279,
+    "n_linked_clients": 1628,
+    "largest_component": 236,
+    "largest_component_share": 0.14496314496314497,
+    "median_component_size": 3.0,
+    "n_components_ge_3": 163
+  },
+  "windows": {
+    "1h": {
+      "candidates": {
+        "n_groups": 47,
+        "n_transactions": 7883,
+        "observed": 9255,
+        "null_mean": 4569.525,
+        "null_sd": 756.3266485844423,
+        "ratio": 2.025374628653963,
+        "z": 6.195041532345104
+      },
+      "controls": {
+        "n_groups": 103,
+        "n_transactions": 1832,
+        "observed": 326,
+        "null_mean": 11.5,
+        "null_sd": 6.520185619506588,
+        "ratio": 28.347826086956523,
+        "z": 48.23482310980583
+      }
+    },
+    "6h": {
+      "candidates": {
+        "n_groups": 47,
+        "n_transactions": 7883,
+        "observed": 52118,
+        "null_mean": 27053.675,
+        "null_sd": 3529.223481000623,
+        "ratio": 1.9264665521412525,
+        "z": 7.10193761741992
+      },
+      "controls": {
+        "n_groups": 103,
+        "n_transactions": 1832,
+        "observed": 549,
+        "null_mean": 69.275,
+        "null_sd": 36.78069971866865,
+        "ratio": 7.924936845904005,
+        "z": 13.042845940108847
+      }
+    },
+    "24h": {
+      "candidates": {
+        "n_groups": 47,
+        "n_transactions": 7883,
+        "observed": 191436,
+        "null_mean": 112786.175,
+        "null_sd": 12203.676039047647,
+        "ratio": 1.697335688527428,
+        "z": 6.4447650649154475
+      },
+      "controls": {
+        "n_groups": 103,
+        "n_transactions": 1832,
+        "observed": 1209,
+        "null_mean": 275.95,
+        "null_sd": 107.52839815721431,
+        "ratio": 4.38122848342091,
+        "z": 8.677242626043896
+      }
+    }
+  },
+  "stratified": [
+    {
+      "size_bin": "1-20",
+      "kind": "candidate",
+      "n_components": 14,
+      "observed": 88,
+      "null_mean": 0.225,
+      "ratio": 391.1111111111111
+    },
+    {
+      "size_bin": "1-20",
+      "kind": "control",
+      "n_components": 74,
+      "observed": 149,
+      "null_mean": 1.175,
+      "ratio": 126.80851063829786
+    },
+    {
+      "size_bin": "21-50",
+      "kind": "candidate",
+      "n_components": 10,
+      "observed": 157,
+      "null_mean": 1.2,
+      "ratio": 130.83333333333334
+    },
+    {
+      "size_bin": "21-50",
+      "kind": "control",
+      "n_components": 24,
+      "observed": 138,
+      "null_mean": 4.175,
+      "ratio": 33.053892215568865
+    },
+    {
+      "size_bin": "51-150",
+      "kind": "candidate",
+      "n_components": 16,
+      "observed": 462,
+      "null_mean": 19.425,
+      "ratio": 23.783783783783782
+    },
+    {
+      "size_bin": "51-150",
+      "kind": "control",
+      "n_components": 5,
+      "observed": 39,
+      "null_mean": 5.1,
+      "ratio": 7.647058823529412
+    },
+    {
+      "size_bin": ">150",
+      "kind": "candidate",
+      "n_components": 7,
+      "observed": 8548,
+      "null_mean": 4803.6,
+      "ratio": 1.7794987093013572
+    }
+  ]
+}

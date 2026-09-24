@@ -1,0 +1,32 @@
+{
+  "v1_card1_addr1_d1n": {
+    "n_transactions": 590540,
+    "n_clients": 217850,
+    "mean_client_size": 2.7107642873536837,
+    "median_client_size": 1.0,
+    "p99_client_size": 20.0,
+    "max_client_size": 1414,
+    "max_client_share": 0.002394418667660108,
+    "singleton_client_share": 0.5748083543722745
+  },
+  "v2_plus_card2": {
+    "n_transactions": 590540,
+    "n_clients": 219974,
+    "mean_client_size": 2.6845899969996454,
+    "median_client_size": 1.0,
+    "p99_client_size": 20.0,
+    "max_client_size": 1414,
+    "max_client_share": 0.002394418667660108,
+    "singleton_client_share": 0.5779773973287752
+  },
+  "v3_plus_email": {
+    "n_transactions": 590540,
+    "n_clients": 275841,
+    "mean_client_size": 2.1408710090233143,
+    "median_client_size": 1.0,
+    "p99_client_size": 15.0,
+    "max_client_size": 1414,
+    "max_client_share": 0.002394418667660108,
+    "singleton_client_share": 0.6504689295644955
+  }
+}

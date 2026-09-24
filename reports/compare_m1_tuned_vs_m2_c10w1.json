@@ -1,0 +1,122 @@
+{
+  "baseline": "m1_tuned",
+  "candidate": "m2_c10w1",
+  "target_fpr": 0.01,
+  "n_boot": 1000,
+  "strata": {
+    "full_test": {
+      "n": 89326,
+      "n_fraud": 3114,
+      "baseline": {
+        "n": 89326,
+        "n_positive": 3114,
+        "prevalence": 0.03486107068490697,
+        "roc_auc": 0.8944990677489593,
+        "pr_auc": 0.5276117530559529,
+        "tpr_at_fpr_1pct": 0.4421965317919075,
+        "threshold_at_fpr_1pct": 0.4129830789814048,
+        "tpr_at_fpr_0.1pct": 0.23699421965317918,
+        "threshold_at_fpr_0.1pct": 0.9651636635255177
+      },
+      "candidate": {
+        "n": 89326,
+        "n_positive": 3114,
+        "prevalence": 0.03486107068490697,
+        "roc_auc": 0.8891375365966903,
+        "pr_auc": 0.5191881147332307,
+        "tpr_at_fpr_1pct": 0.4338471419396275,
+        "threshold_at_fpr_1pct": 0.5135235655129534,
+        "tpr_at_fpr_0.1pct": 0.23956326268464997,
+        "threshold_at_fpr_0.1pct": 0.9597166662254459
+      },
+      "difference": {
+        "observed_difference": -0.00834938985228001,
+        "ci_low": -0.022410922967487285,
+        "ci_high": 0.0012956544797134537,
+        "n_boot": 1000,
+        "excludes_zero": false
+      },
+      "mcnemar": {
+        "b_only": 401,
+        "a_only": 660,
+        "p_value": 1.7214756038936734e-15
+      }
+    },
+    "has_snapshot": {
+      "n": 45845,
+      "n_fraud": 1028,
+      "baseline": {
+        "n": 45845,
+        "n_positive": 1028,
+        "prevalence": 0.022423383138837388,
+        "roc_auc": 0.898714391400081,
+        "pr_auc": 0.4763179429903979,
+        "tpr_at_fpr_1pct": 0.44455252918287935,
+        "threshold_at_fpr_1pct": 0.17903244621318468,
+        "tpr_at_fpr_0.1pct": 0.22762645914396887,
+        "threshold_at_fpr_0.1pct": 0.8980503697582144
+      },
+      "candidate": {
+        "n": 45845,
+        "n_positive": 1028,
+        "prevalence": 0.022423383138837388,
+        "roc_auc": 0.8887328139188428,
+        "pr_auc": 0.4580416214589382,
+        "tpr_at_fpr_1pct": 0.42996108949416345,
+        "threshold_at_fpr_1pct": 0.25167244888618223,
+        "tpr_at_fpr_0.1pct": 0.21206225680933852,
+        "threshold_at_fpr_0.1pct": 0.8725660058323195
+      },
+      "difference": {
+        "observed_difference": -0.014591439688715901,
+        "ci_low": -0.037075891365567305,
+        "ci_high": 0.010729322065178935,
+        "n_boot": 1000,
+        "excludes_zero": false
+      },
+      "mcnemar": {
+        "b_only": 201,
+        "a_only": 341,
+        "p_value": 1.9352753506673405e-09
+      }
+    },
+    "linked_clients": {
+      "n": 2208,
+      "n_fraud": 140,
+      "baseline": {
+        "n": 2208,
+        "n_positive": 140,
+        "prevalence": 0.06340579710144928,
+        "roc_auc": 0.9266268306161924,
+        "pr_auc": 0.7054851886138527,
+        "tpr_at_fpr_1pct": 0.5928571428571429,
+        "threshold_at_fpr_1pct": 0.5641700091991148,
+        "tpr_at_fpr_0.1pct": 0.4928571428571429,
+        "threshold_at_fpr_0.1pct": 0.9546401622127769
+      },
+      "candidate": {
+        "n": 2208,
+        "n_positive": 140,
+        "prevalence": 0.06340579710144928,
+        "roc_auc": 0.8904048079579994,
+        "pr_auc": 0.6587307238532363,
+        "tpr_at_fpr_1pct": 0.4928571428571429,
+        "threshold_at_fpr_1pct": 0.8040204574205647,
+        "tpr_at_fpr_0.1pct": 0.37142857142857144,
+        "threshold_at_fpr_0.1pct": 0.9606336352986348
+      },
+      "difference": {
+        "observed_difference": -0.09999999999999998,
+        "ci_low": -0.14388489208633093,
+        "ci_high": -0.035643796992481255,
+        "n_boot": 1000,
+        "excludes_zero": true
+      },
+      "mcnemar": {
+        "b_only": 6,
+        "a_only": 32,
+        "p_value": 2.4342560209333897e-05
+      }
+    }
+  }
+}

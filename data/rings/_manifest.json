@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "artifact": "edges.parquet",
+  "written_at": "2026-09-23T12:18:36+0530",
+  "write_seconds": 0.009,
+  "rows": 13460,
+  "columns": [
+    "ring_id",
+    "source",
+    "target",
+    "weight",
+    "attributes"
+  ],
+  "n_columns": 5,
+  "bytes": 114645,
+  "params": {
+    "recipe": "v1_card1_addr1_d1n",
+    "min_degree": 2,
+    "max_degree": 10,
+    "min_weight": 1
+  },
+  "inputs": [
+    {
+      "path": "/Users/usaid/Desktop/FDS-Project/data/base/transactions.parquet",
+      "sha256": "b67766128de2836301fef4143f5d2ef1c6eecd32ecdb1c22d25be5fc27556fa2",
+      "bytes": 62867040
+    }
+  ],
+  "git": {
+    "commit": "e643432b56c7c7c9444c822c46cd1c9543404d51",
+    "dirty": true
+  },
+  "versions": {
+    "pandas": "2.3.3"
+  }
+}

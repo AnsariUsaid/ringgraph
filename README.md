@@ -74,13 +74,30 @@ diagnostics and the graph render — nothing in the result path depends on it.
 ```
 
 `runs/index.jsonl` records every run with its resolved config and git commit.
-Generated artefacts (`data/`, `reports/`, `preds/`) are gitignored, so a fresh
-clone must run the pipeline before the demo has anything to serve.
+Generated artefacts are gitignored, with one deliberate exception: the ~7.6 MB
+the API actually reads is committed, so that a clone can run the demo without
+reproducing anything. See *Running the demo* below.
 
 ## Running the demo
 
-Two processes. The API serves the precomputed ring catalogue from parquet, so
-Neo4j does not need to be running for the frontend to work.
+Nothing above is required to do this. The ring catalogue, the reports and the
+prediction table for `m1_tuned` are committed — `data/rings/*.parquet`,
+`reports/*.json` and `preds/model=m1_tuned/` — so a fresh clone serves the full
+frontend immediately. No Kaggle account, no pipeline run, no database.
+
+Committing generated data contradicts the policy above and is a considered
+exception: regenerating it needs the competition dataset, credentials and
+several hours, and without it every page of the demo is an error state. The
+*inputs* stay ignored; only the output the API reads is tracked.
+
+```bash
+pip install -r requirements.txt
+npm install --prefix web
+```
+
+Then two processes. The API serves the ring catalogue from parquet, so Neo4j
+does not need to be running for the frontend to work — nothing in the serving
+path touches it.
 
 ```bash
 .venv/bin/uvicorn api.main:app --port 8000
@@ -142,6 +159,7 @@ scripts/      numbered pipeline entrypoints, run in order
 api/          FastAPI service over the precomputed ring catalogue (parquet, not Neo4j)
 web/          React frontend
 tests/        leakage and invariant tests
-data/         raw → interim → processed (gitignored, created at runtime)
-reports/      generated analysis output (gitignored)
+data/         raw → interim → processed (gitignored, except data/rings/)
+reports/      generated analysis output (*.json tracked; the API reads them)
+preds/        per-model prediction tables (only model=m1_tuned tracked)
 ```

@@ -21,15 +21,15 @@ dist/
 # ── Data ──────────────────────────────────────────────────────────────────
 # The IEEE-CIS dataset and everything derived from it. Reproduced by scripts,
 # never committed.
-data/
+data/*
 *.csv
 *.parquet
 *.zip
 *.feather
 
 # ── Reports / model artefacts ─────────────────────────────────────────────
-reports/
-preds/
+reports/*
+preds/*
 models/*.txt
 models/*.pkl
 models/*.pt
@@ -60,3 +60,33 @@ yarn-error.log*
 .vscode/
 .claude/
 *.swp
+
+# ── Served artefacts ──────────────────────────────────────────────────────
+# Exactly what api/main.py reads, and nothing else: ~7.6 MB, so that a clone
+# can run the whole app without a Kaggle account, a pipeline run or a database.
+#
+# Committing generated data contradicts the policy above, and the exception is
+# deliberate. Regenerating these needs the competition dataset, credentials and
+# several hours; without them a fresh clone serves nothing and every page is an
+# error state. The inputs stay ignored -- this is the output the demo reads.
+#
+# Two things make these rules fussy, both verified rather than assumed:
+#   * each directory level must be re-included separately, because git will not
+#     descend into an excluded directory (D-04);
+#   * they must come after the blanket *.parquet and *.csv rules above, because
+#     the last matching rule wins.
+!data/rings/
+data/rings/*
+!data/rings/*.parquet
+!data/rings/_manifest.json
+
+!reports/
+!reports/*.json
+
+!preds/
+preds/*
+!preds/model=m1_tuned/
+preds/model=m1_tuned/*
+!preds/model=m1_tuned/run=*/
+preds/model=m1_tuned/run=*/*
+!preds/model=m1_tuned/run=*/preds.parquet

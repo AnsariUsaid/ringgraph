@@ -1,0 +1,221 @@
+{
+  "recipe": "v1_card1_addr1_d1n",
+  "entities": {
+    "Card": {
+      "n_values": 13553,
+      "n_clients_total": 217850,
+      "n_clients_with_value": 217850,
+      "max_client_degree": 3753,
+      "median_client_degree": 2.0,
+      "p99_client_degree": 287.3999999999978,
+      "share_degree_1": 0.3650852209842839,
+      "survival": {
+        "50": {
+          "n_entity_values": 7964,
+          "client_coverage": 0.2777415652972229,
+          "max_client_degree_kept": 50
+        },
+        "100": {
+          "n_entity_values": 8236,
+          "client_coverage": 0.366490704613266,
+          "max_client_degree_kept": 100
+        },
+        "500": {
+          "n_entity_values": 8543,
+          "client_coverage": 0.6694101445949048,
+          "max_client_degree_kept": 500
+        },
+        "1000": {
+          "n_entity_values": 8581,
+          "client_coverage": 0.7889832453523067,
+          "max_client_degree_kept": 988
+        },
+        "5000": {
+          "n_entity_values": 8605,
+          "client_coverage": 0.9772871241680056,
+          "max_client_degree_kept": 3753
+        }
+      }
+    },
+    "Address": {
+      "n_values": 332,
+      "n_clients_total": 217850,
+      "n_clients_with_value": 199833,
+      "max_client_degree": 15805,
+      "median_client_degree": 2.0,
+      "p99_client_degree": 12269.24999999999,
+      "share_degree_1": 0.4427710843373494,
+      "survival": {
+        "50": {
+          "n_entity_values": 120,
+          "client_coverage": 0.004461785632315814,
+          "max_client_degree_kept": 46
+        },
+        "100": {
+          "n_entity_values": 126,
+          "client_coverage": 0.006330043607987147,
+          "max_client_degree_kept": 75
+        },
+        "500": {
+          "n_entity_values": 136,
+          "client_coverage": 0.019118659628184532,
+          "max_client_degree_kept": 433
+        },
+        "1000": {
+          "n_entity_values": 147,
+          "client_coverage": 0.055753959146201515,
+          "max_client_degree_kept": 895
+        },
+        "5000": {
+          "n_entity_values": 171,
+          "client_coverage": 0.3394032591232499,
+          "max_client_degree_kept": 3954
+        }
+      }
+    },
+    "EmailDomain": {
+      "n_values": 59,
+      "n_clients_total": 217850,
+      "n_clients_with_value": 197327,
+      "max_client_degree": 101220,
+      "median_client_degree": 154.0,
+      "p99_client_degree": 69792.1200000001,
+      "share_degree_1": 0.0,
+      "survival": {
+        "50": {
+          "n_entity_values": 9,
+          "client_coverage": 0.001280697727794354,
+          "max_client_degree_kept": 48
+        },
+        "100": {
+          "n_entity_values": 21,
+          "client_coverage": 0.005788386504475556,
+          "max_client_degree_kept": 100
+        },
+        "500": {
+          "n_entity_values": 40,
+          "client_coverage": 0.02598577002524673,
+          "max_client_degree_kept": 472
+        },
+        "1000": {
+          "n_entity_values": 43,
+          "client_coverage": 0.03601560706908423,
+          "max_client_degree_kept": 959
+        },
+        "5000": {
+          "n_entity_values": 54,
+          "client_coverage": 0.13333945375258205,
+          "max_client_degree_kept": 4278
+        }
+      }
+    },
+    "Device": {
+      "n_values": 1786,
+      "n_clients_total": 217850,
+      "n_clients_with_value": 63143,
+      "max_client_degree": 27952,
+      "median_client_degree": 3.0,
+      "p99_client_degree": 188.40000000000146,
+      "share_degree_1": 0.2989921612541993,
+      "survival": {
+        "50": {
+          "n_entity_values": 1157,
+          "client_coverage": 0.03461556116593987,
+          "max_client_degree_kept": 50
+        },
+        "100": {
+          "n_entity_values": 1222,
+          "client_coverage": 0.044461785632315814,
+          "max_client_degree_kept": 97
+        },
+        "500": {
+          "n_entity_values": 1246,
+          "client_coverage": 0.056153316502180396,
+          "max_client_degree_kept": 353
+        },
+        "1000": {
+          "n_entity_values": 1247,
+          "client_coverage": 0.059141611200367226,
+          "max_client_degree_kept": 772
+        },
+        "5000": {
+          "n_entity_values": 1248,
+          "client_coverage": 0.06524213908652743,
+          "max_client_degree_kept": 1492
+        }
+      }
+    },
+    "Browser": {
+      "n_values": 130,
+      "n_clients_total": 217850,
+      "n_clients_with_value": 69088,
+      "max_client_degree": 13049,
+      "median_client_degree": 55.0,
+      "p99_client_degree": 9155.639999999989,
+      "share_degree_1": 0.12307692307692308,
+      "survival": {
+        "50": {
+          "n_entity_values": 43,
+          "client_coverage": 0.004177186137250401,
+          "max_client_degree_kept": 48
+        },
+        "100": {
+          "n_entity_values": 64,
+          "client_coverage": 0.009979343585035575,
+          "max_client_degree_kept": 98
+        },
+        "500": {
+          "n_entity_values": 88,
+          "client_coverage": 0.03206334633922424,
+          "max_client_degree_kept": 494
+        },
+        "1000": {
+          "n_entity_values": 95,
+          "client_coverage": 0.04931374799173743,
+          "max_client_degree_kept": 813
+        },
+        "5000": {
+          "n_entity_values": 108,
+          "client_coverage": 0.1513518476015607,
+          "max_client_degree_kept": 3982
+        }
+      }
+    },
+    "Screen": {
+      "n_values": 260,
+      "n_clients_total": 217850,
+      "n_clients_with_value": 47680,
+      "max_client_degree": 12679,
+      "median_client_degree": 2.0,
+      "p99_client_degree": 4302.250000000033,
+      "share_degree_1": 0.4076923076923077,
+      "survival": {
+        "50": {
+          "n_entity_values": 111,
+          "client_coverage": 0.00481064952949277,
+          "max_client_degree_kept": 47
+        },
+        "100": {
+          "n_entity_values": 122,
+          "client_coverage": 0.008377323846683498,
+          "max_client_degree_kept": 86
+        },
+        "500": {
+          "n_entity_values": 135,
+          "client_coverage": 0.02040853798485196,
+          "max_client_degree_kept": 416
+        },
+        "1000": {
+          "n_entity_values": 139,
+          "client_coverage": 0.03405554280468212,
+          "max_client_degree_kept": 864
+        },
+        "5000": {
+          "n_entity_values": 151,
+          "client_coverage": 0.13103052559100298,
+          "max_client_degree_kept": 3759
+        }
+      }
+    }
+  }
+}

@@ -322,7 +322,7 @@ export function AxisAtlas() {
               {lift === undefined ? "—" : `${lift.toFixed(2)}×`}
             </div>
             <div className="caps" style={{ color: beats ? "var(--risk-3)" : "var(--ink-4)" }}>
-              {lift === undefined ? "measuring" : beats ? "beats the control" : "below the control"}
+              {lift === undefined ? "measuring" : "vs. size-only ranking"}
             </div>
           </div>
         </div>

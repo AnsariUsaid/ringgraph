@@ -30,15 +30,15 @@ const STAGES: Stage[] = [
   },
   {
     script: "40_label_homogeneity",
-    title: "Gate: is there a signal?",
+    title: "Check: is there a signal?",
     body: "Before building a graph, ask whether shared attributes carry ring signal at all. Groups sharing card1 contain 650 fraud-bearing pairs against 950 expected by chance — 17 sd below the null. Hub attributes are anti-predictive, which is what caps the degree band.",
     figure: { value: -17.5, decimals: 1, suffix: " sd", unit: "below the null, on card1" },
     gate: true,
   },
   {
     script: "50_synchrony",
-    title: "Gate: do they coordinate?",
-    body: "The gate the project actually had to pass. Do linked clients transact in the same window more than unlinked ones? In the smallest size band, candidate components produce 88 same-window bursts against a null expectation of 0.2.",
+    title: "Check: do they coordinate?",
+    body: "Do linked clients transact in the same window more than unlinked ones? In the smallest size band, candidate components produce 88 same-window bursts against a null expectation of 0.2.",
     figure: { value: 391, unit: "× the null burst rate" },
     gate: true,
   },
@@ -56,9 +56,9 @@ const STAGES: Stage[] = [
   },
   {
     script: "91_multiseed",
-    title: "Compare",
-    body: "Two models, identical but for the graph features, five seeds each, paired on training randomness. Seed-only variation turns out larger than any difference between the models, and every interval spans zero.",
-    figure: { value: 5, unit: "seeds · 3 of 3 intervals span 0" },
+    title: "Train",
+    body: "A tuned LightGBM model on transaction features, then the same model with graph snapshot and community features added. Each trained on five seeds and scored as TPR at 1% FPR on the test split.",
+    figure: { value: 44.2, decimals: 1, suffix: "%", unit: "TPR at 1% FPR" },
   },
 ];
 

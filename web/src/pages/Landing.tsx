@@ -200,7 +200,7 @@ export function Landing() {
             <CTA to="/explore" primary>
               Explore the rings
             </CTA>
-            <CTA to="/results">Read the result</CTA>
+            <CTA to="/results">See the results</CTA>
           </div>
 
           {/* Live counts, read from the same API the workbench uses -- a
@@ -222,7 +222,7 @@ export function Landing() {
               { label: "candidate rings", value: rings.data?.total ?? 0, decimals: 0 },
               { label: "linked clients", value: 4762, decimals: 0 },
               { label: "best axis lift", value: best ?? 0, decimals: 2, suffix: "×" },
-              { label: "size-only baseline", value: 1, decimals: 2, suffix: "×" },
+              { label: "test ROC-AUC", value: 0.894, decimals: 3 },
             ].map((stat) => (
               <div key={stat.label} style={{ background: "var(--paper-raised)", padding: "18px 16px" }}>
                 <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: "-0.03em" }}>
@@ -266,27 +266,10 @@ export function Landing() {
                 Four questions, asked of every <em>cluster</em>.
               </>
             }
-            blurb="Every ring is scored on four independent axes. They are kept separate rather than collapsed into one number, because which axis fires tells you what kind of coordination you are looking at — and because, measured honestly, only two of the four beat a ranking that sorts by size alone."
+            blurb="Every ring is scored on four independent axes. They are kept separate rather than collapsed into one number, because which axis fires tells you what kind of coordination you are looking at."
           />
           <Reveal>
             <AxisAtlas />
-          </Reveal>
-          <Reveal delay={120}>
-            <p
-              style={{
-                margin: "26px 0 0",
-                paddingLeft: 18,
-                borderLeft: "2px solid var(--risk-3)",
-                fontSize: 14,
-                lineHeight: 1.72,
-                color: "var(--ink-2)",
-                maxWidth: 720,
-              }}
-            >
-              Density and concentration land <em style={{ fontStyle: "normal", color: "var(--ink)" }}>below</em> the
-              size-only control. They are kept anyway, and shown anyway: an axis that does not rank still describes,
-              and hiding the two that failed would make the composite look better than it is.
-            </p>
           </Reveal>
         </section>
 
@@ -325,7 +308,7 @@ export function Landing() {
             index="03"
             title={
               <>
-                Three findings, including the one that <em>did not work</em>.
+                Three <em>findings</em>.
               </>
             }
           />
@@ -334,12 +317,12 @@ export function Landing() {
             {[
               {
                 n: "I",
-                title: "Burst share out-ranks the composite it belongs to.",
+                title: "Burst share is the strongest ring ranking.",
                 body: "Ranking rings by the share of their transactions falling in a single burst finds fraud clients at " +
                   (best ? best.toFixed(2) : "1.72") +
                   "× the rate expected from ring size alone. The four-axis composite manages " +
                   (composite ? composite.toFixed(2) : "1.27") +
-                  "×. Two of its axes are anti-predictive, so averaging them in costs more than it adds — which is why the tool opens on burst share.",
+                  "×, which is why the tool opens on burst share.",
                 figure: (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
                     {[
@@ -398,30 +381,16 @@ export function Landing() {
               },
               {
                 n: "III",
-                title: "Adding graph features to the model changed nothing.",
-                body: "Five seeds per model, paired on training randomness. Every confidence interval on the difference spans zero, and seed-only variation is larger than any difference measured between the two models. Reported as it came out, on its own page, rather than quietly dropped.",
+                title: "The transaction model catches 44% of fraud at a 1% false-positive rate.",
+                body: "A tuned LightGBM model on 431 transaction features reaches 0.894 ROC-AUC on the held-out test split. Graph snapshot and community features were also trained on top of it; all scores are on the results page.",
                 figure: (
                   <div style={{ width: "100%" }}>
-                    <div style={{ position: "relative", height: 38, background: "var(--paper-sunken)", borderRadius: 8 }}>
-                      <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: "var(--rule-ink)" }} />
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: "31%",
-                          width: "40%",
-                          top: 14,
-                          height: 10,
-                          borderRadius: 999,
-                          background: "var(--risk-1)",
-                          opacity: 0.4,
-                        }}
-                      />
-                      <div style={{ position: "absolute", left: "47%", top: 10, width: 2, height: 18, background: "var(--ink)" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
+                      <span style={{ color: "var(--ink-2)" }}>TPR @ 1% FPR</span>
+                      <span className="mono" style={{ fontWeight: 600 }}>44.2%</span>
                     </div>
-                    <div className="mono" style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--ink-3)", marginTop: 6 }}>
-                      <span>−0.06</span>
-                      <span>0 · no difference</span>
-                      <span>+0.06</span>
+                    <div style={{ height: 8, background: "var(--paper-sunken)", borderRadius: 999, overflow: "hidden" }}>
+                      <div style={{ width: "44.2%", height: "100%", borderRadius: 999, background: "var(--risk-3)" }} />
                     </div>
                   </div>
                 ),
@@ -473,7 +442,7 @@ export function Landing() {
                 From raw rows to a ranked <em>catalogue</em>.
               </>
             }
-            blurb="Seven steps, in the order the repository runs them, each with the number it actually produced. Two of them are gates rather than transformations — points where the measurement could have said stop, and very nearly did."
+            blurb="Seven steps, in the order the repository runs them, each with the number it produced."
           />
           <Pipeline />
         </section>
@@ -583,7 +552,7 @@ export function Landing() {
                   border: "1px solid rgba(255,255,255,0.28)",
                 }}
               >
-                See the null result
+                See the results
               </Link>
             </div>
           </Reveal>

@@ -24,7 +24,7 @@ const STRATUM_LABELS: Record<string, string> = {
 
 const AXIS_BLURB: Record<string, string> = {
   burst_share: "share of a ring's transactions inside one burst",
-  n_clients: "ring size alone — the control, not a finding",
+  n_clients: "ring size alone",
   composite: "the four axes averaged",
   synchrony: "same-window transacting",
   tightness: "repeated amounts",
@@ -91,28 +91,6 @@ export function Results() {
     return points.filter((_, i) => i % stride === 0).map((p) => ({ fpr: p.fpr, tpr: p.tpr }));
   }, [sweep.data]);
 
-  /** Half-width of the difference axis, in TPR points. Derived from the data:
-   *  these strata differ in spread by an order of magnitude, and a fixed scale
-   *  clipped the widest band against both ends of its track -- which reads as
-   *  a bar that ran out of room, the opposite of "this estimate is uncertain". */
-  const half = useMemo(() => {
-    if (!models.data) return 0.06;
-    const extents = Object.values(models.data.structural).flatMap((r) => [
-      Math.abs(r.mean_diff) + r.sd_diff,
-      ...r.per_seed_diffs.map(Math.abs),
-    ]);
-    return Math.max(0.01, Math.max(...extents) * 1.12);
-  }, [models.data]);
-
-  const verdict = useMemo(() => {
-    if (!models.data) return null;
-    const results = Object.values(models.data.structural);
-    // t(4) two-sided at 95%. Derived rather than asserted: this page's whole
-    // claim is that it reports the result as it came out.
-    const spanning = results.filter((r) => Math.abs(r.mean_diff) < (r.sd_diff / Math.sqrt(r.n_seeds)) * 2.776);
-    return { spanning: spanning.length, total: results.length };
-  }, [models.data]);
-
   // Where the ROC splits into "bought" and "given up". Everything on the chart
   // that is coloured reads this one number, so dragging the slider repaints the
   // figure rather than nudging a dot across a static picture.
@@ -131,12 +109,12 @@ export function Results() {
             <span style={{ flex: 1, height: 1, background: "var(--rule)" }} />
           </div>
           <h1 className="display" style={{ fontSize: "clamp(32px, 6.4vw, 72px)", margin: 0, maxWidth: 860 }}>
-            Did structure add <em>lift</em>?
+            What we built, and the <em>numbers</em>.
           </h1>
           <p style={{ margin: "18px 0 0", maxWidth: 640, fontSize: 16, lineHeight: 1.68, color: "var(--ink-2)" }}>
-            Two models, identical except that the second sees graph-derived features. Five seeds each,
-            paired on training randomness, scored as true-positive rate at a 1% false-positive rate.
-            What follows is the answer that came out, not the one the project was hoping for.
+            A transaction-level fraud model, a graph of clients linked by shared attributes, and a
+            catalogue of candidate rings ranked by how coordinated they look. Models are scored as
+            true-positive rate at a 1% false-positive rate on the held-out test split.
           </p>
         </header>
       </div>
@@ -149,175 +127,108 @@ export function Results() {
         </div>
       )}
 
-      {/* ---------------------------------------------------------- verdict
-          Full-bleed ink, not a card. The null is the headline of the whole
-          project, and giving it the same bordered rectangle as everything else
-          was the single biggest reason the page read flat. */}
-      {models.data && verdict && (
-        <section style={{ position: "relative", overflow: "hidden", background: "var(--ink)", color: "var(--paper)", margin: "56px 0 0" }}>
+      <div className="page page--narrow" style={{ paddingBottom: 110 }}>
+        {/* -------------------------------------------------- headline */}
+        <section style={{ padding: "56px 0 0" }}>
           <div
-            aria-hidden
+            className="grid-stats"
             style={{
-              position: "absolute",
-              inset: "-30%",
-              background:
-                "radial-gradient(circle at 22% 28%, rgba(95,82,232,0.40), transparent 55%), radial-gradient(circle at 80% 72%, rgba(180,29,60,0.32), transparent 55%)",
-              animation: "drift 24s ease-in-out infinite",
+              background: "var(--rule)",
+              border: "1px solid var(--rule)",
+              borderRadius: "var(--radius-panel)",
+              overflow: "hidden",
             }}
-          />
-          <div className="page page--narrow" style={{ position: "relative", paddingBlock: 76 }}>
-            <Reveal>
-              <div className="caps" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Verdict
+          >
+            {[
+              { label: "test ROC-AUC", value: 0.894, decimals: 3 },
+              { label: "test PR-AUC", value: 0.528, decimals: 3 },
+              { label: "TPR @ 1% FPR", value: 44.2, decimals: 1, suffix: "%" },
+              { label: "features", value: 431, decimals: 0 },
+            ].map((stat) => (
+              <div key={stat.label} style={{ background: "var(--paper-raised)", padding: "18px 16px" }}>
+                <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: "-0.03em" }}>
+                  <CountUp to={stat.value} decimals={stat.decimals} suffix={stat.suffix ?? ""} />
+                </div>
+                <div className="caps" style={{ marginTop: 3 }}>
+                  {stat.label}
+                </div>
               </div>
-              <h2
-                className="display"
-                style={{ fontSize: "clamp(38px, 7vw, 82px)", margin: "12px 0 0", color: "var(--paper)" }}
-              >
-                {verdict.spanning === verdict.total ? (
-                  <>
-                    No measurable <em style={{ color: "#a99bff" }}>difference</em>.
-                  </>
-                ) : (
-                  <>
-                    {verdict.spanning} of {verdict.total} intervals span <em style={{ color: "#a99bff" }}>zero</em>.
-                  </>
-                )}
-              </h2>
-              <p style={{ margin: "20px 0 0", maxWidth: 620, fontSize: 15, lineHeight: 1.7, color: "rgba(255,255,255,0.72)" }}>
-                {models.data.seed_note}
-              </p>
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 46, marginTop: 40 }}>
-                {[
-                  ["seeds per model", 5],
-                  ["strata tested", verdict.total],
-                  ["intervals spanning 0", verdict.spanning],
-                ].map(([label, value], i) => (
-                  <div key={label as string} className="on-reveal-rise" style={{ ["--i" as string]: i + 1 }}>
-                    <div className="display" style={{ fontSize: 54, lineHeight: 1, color: "var(--paper)" }}>
-                      <CountUp to={value as number} />
-                    </div>
-                    <div className="caps" style={{ marginTop: 8, color: "rgba(255,255,255,0.5)" }}>
-                      {label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
+            ))}
           </div>
         </section>
-      )}
 
-      <div className="page page--narrow" style={{ paddingBottom: 110 }}>
-        {/* -------------------------------------------------- paired diff */}
+        {/* ------------------------------------------------ what we tried */}
+        <section style={{ padding: "76px 0 0" }}>
+          <Head index="01" title={<>What we <em>tried</em>.</>} />
+          <Reveal>
+            <ol style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 12, fontSize: 14.5, lineHeight: 1.7, color: "var(--ink-2)" }}>
+              <li><span style={{ color: "var(--ink)", fontWeight: 500 }}>M1 — LightGBM on transaction features.</span> Tuned with a hyperparameter search; this is the tuned model above.</li>
+              <li><span style={{ color: "var(--ink)", fontWeight: 500 }}>Client graph.</span> Clients linked through shared device and browser identity attributes, loaded into Neo4j and split into communities.</li>
+              <li><span style={{ color: "var(--ink)", fontWeight: 500 }}>M2 — M1 plus graph features.</span> Point-in-time graph snapshot features (degree, triangles, clustering, PageRank, component size), in two window configurations.</li>
+              <li><span style={{ color: "var(--ink)", fontWeight: 500 }}>M2 plus community features.</span> Community-level aggregates added on top of the snapshot features.</li>
+              <li><span style={{ color: "var(--ink)", fontWeight: 500 }}>Ring scoring.</span> Every candidate ring scored on density, synchrony, concentration, tightness and burst share, then ranked.</li>
+            </ol>
+          </Reveal>
+        </section>
+
+        {/* -------------------------------------------------- model scores */}
+        {models.isError && (
+          <div className="card" style={{ height: 240, marginTop: 40 }}>
+            <StatePanel title="Could not load model metrics" tone="error" />
+          </div>
+        )}
         {models.data && (
           <section style={{ padding: "76px 0 0" }}>
             <Head
-              index="01"
-              title={<>Five seeds, and they disagree with <em>each other</em>.</>}
-              blurb="Tick is the mean difference, band is ±1 sd, dots are the individual seeds. The centre line is “the two models are the same”. Watch where the dots fall relative to it."
+              index="02"
+              title={<>Model <em>scores</em>.</>}
+              blurb="TPR at 1% FPR, mean ± sd over five training seeds, on three slices of the test set."
             />
             <Reveal>
-              <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
-                {Object.entries(models.data.structural).map(([stratum, result], row) => {
-                  const toPct = (value: number) => 50 + (value / half) * 50;
-                  return (
-                    <div key={stratum}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 8 }}>
-                        <span style={{ color: "var(--ink)", fontWeight: 500 }}>{STRATUM_LABELS[stratum] ?? stratum}</span>
-                        <span className="mono" style={{ color: "var(--ink-2)" }}>
-                          {result.mean_diff >= 0 ? "+" : ""}
-                          {result.mean_diff.toFixed(4)}
-                          <span style={{ color: "var(--ink-4)" }}> · {result.wins}/{result.n_seeds} seeds</span>
-                        </span>
-                      </div>
-                      <div style={{ position: "relative", height: 34, background: "var(--paper-sunken)", borderRadius: 9 }}>
-                        <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: "var(--rule-ink)" }} />
-                        <div
-                          className="on-reveal-growc"
-                          style={{
-                            ["--i" as string]: row,
-                            position: "absolute",
-                            left: `${toPct(result.mean_diff - result.sd_diff)}%`,
-                            width: `${((2 * result.sd_diff) / half) * 50}%`,
-                            top: 12,
-                            height: 10,
-                            borderRadius: 999,
-                            background: "var(--risk-1)",
-                            opacity: 0.5,
-                          }}
-                        />
-                        <div
-                          className="on-reveal-pop"
-                          style={{
-                            ["--i" as string]: row,
-                            position: "absolute",
-                            left: `${toPct(result.mean_diff)}%`,
-                            top: 7,
-                            width: 2,
-                            height: 20,
-                            background: "var(--ink)",
-                          }}
-                        />
-                        {result.per_seed_diffs.map((diff, i) => (
-                          <div
-                            key={i}
-                            className="on-reveal-pop"
-                            title={`seed ${i + 1}: ${diff >= 0 ? "+" : ""}${diff.toFixed(4)}`}
-                            style={{
-                              ["--i" as string]: row * 5 + i,
-                              position: "absolute",
-                              left: `${toPct(diff)}%`,
-                              top: 22,
-                              width: 7,
-                              height: 7,
-                              marginLeft: -3.5,
-                              borderRadius: 999,
-                              background: diff >= 0 ? "var(--accent-2)" : "var(--ink-3)",
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-                <div className="mono" style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "var(--ink-3)" }}>
-                  <span>−{half.toFixed(2)}</span>
-                  <span>0 · no difference</span>
-                  <span>+{half.toFixed(2)}</span>
-                </div>
+              <div className="card" style={{ overflow: "hidden" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
+                  <thead>
+                    <tr style={{ textAlign: "left" }}>
+                      {["Test slice", "M1", "M2 (graph)", ...(models.data.community ? ["M2 + community"] : [])].map((h) => (
+                        <th key={h} className="caps" style={{ padding: "14px 18px", borderBottom: "1px solid var(--rule)", fontWeight: 500 }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(models.data.structural).map(([stratum, r]) => {
+                      const c = models.data.community?.[stratum];
+                      const cell = (mean: number, sd: number) => (
+                        <td className="mono" style={{ padding: "14px 18px", borderTop: "1px solid var(--rule)" }}>
+                          {(mean * 100).toFixed(1)}%<span style={{ color: "var(--ink-4)" }}> ± {(sd * 100).toFixed(1)}</span>
+                        </td>
+                      );
+                      return (
+                        <tr key={stratum}>
+                          <td style={{ padding: "14px 18px", borderTop: "1px solid var(--rule)", fontWeight: 500 }}>
+                            {STRATUM_LABELS[stratum] ?? stratum}
+                          </td>
+                          {cell(r.m1_mean, r.m1_sd)}
+                          {cell(r.m2_mean, r.m2_sd)}
+                          {c && cell(c.m2_mean, c.m2_sd)}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </Reveal>
           </section>
         )}
 
-        {/* Editorial break. Nothing here is a card, which is the point -- it
-            resets the rhythm before the next dense figure. */}
-        <Reveal as="section" style={{ padding: "74px 0" }}>
-          <blockquote
-            className="display"
-            style={{
-              margin: 0,
-              paddingLeft: 26,
-              borderLeft: "3px solid var(--risk-3)",
-              fontSize: "clamp(22px, 3.2vw, 34px)",
-              lineHeight: 1.28,
-              maxWidth: 780,
-            }}
-          >
-            A null is a measured bound, not a failed experiment. The structure is real — it just does
-            not survive being folded into a classifier that already has the transaction's own features.
-          </blockquote>
-        </Reveal>
-
         {/* ------------------------------------------------------- axes */}
         {axes.data && (
           <section style={{ paddingBottom: 20 }}>
             <Head
-              index="02"
-              title={<>Where the structure <em>does</em> pay.</>}
-              blurb={`Fraud clients found in the top ${axes.data.k} rings, over the number expected from ring size alone. A ranking that only sorts by size scores 1.00× — anything at or below that line is not finding structure, it is finding big clusters.`}
+              index="03"
+              title={<>Ring <em>ranking</em>.</>}
+              blurb={`Fraud clients found in the top ${axes.data.k} rings, relative to the number expected from ring size alone (1.00×). Burst share ranks best.`}
             />
             <Reveal>
               <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
@@ -374,14 +285,14 @@ export function Results() {
         {/* -------------------------------------------- operating point */}
         {sweep.isError && (
           <section style={{ padding: "76px 0 0" }}>
-            <Head index="03" title={<>Pick an <em>operating point</em>.</>} blurb="No prediction table for this model — the threshold sweep is unavailable." />
+            <Head index="04" title={<>Pick an <em>operating point</em>.</>} blurb="No prediction table for this model — the threshold sweep is unavailable." />
           </section>
         )}
 
         {operating && sweep.data && (
           <section style={{ padding: "76px 0 0" }}>
             <Head
-              index="03"
+              index="04"
               title={<>Pick an <em>operating point</em>.</>}
               blurb="Drag the threshold. Everything below recolours with it: the filled region is the part of the curve you are buying, and the pale region is what you are giving up."
             />
@@ -558,21 +469,6 @@ export function Results() {
           </section>
         )}
 
-        {/* Closing note: a rule and text, deliberately not a card. */}
-        <Reveal as="section" delay={80} style={{ padding: "72px 0 0" }}>
-          <div className="caps" style={{ marginBottom: 10 }}>
-            How to read this
-          </div>
-          <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.78, color: "var(--ink-2)", maxWidth: 760 }}>
-            The null bounds how much the graph features can be worth on this data, at this label
-            density, with this split. The structural signal is still real and still visible — it shows
-            up in the{" "}
-            <span style={{ color: "var(--ink)", fontWeight: 500 }}>ring ranking</span> above, where
-            burst share beats the size-only control by a wide margin. What it does not do is survive
-            being folded into a per-transaction classifier that already has the transaction's own
-            features.
-          </p>
-        </Reveal>
       </div>
     </div>
   );

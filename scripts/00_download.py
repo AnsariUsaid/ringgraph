@@ -30,9 +30,10 @@ def kaggle_executable() -> str:
     the venv's bin directory on PATH, so a bare ``"kaggle"`` resolves against the
     user's shell PATH or, more often, not at all.
     """
-    candidate = Path(sys.executable).parent / "kaggle"
-    if candidate.exists():
-        return str(candidate)
+    for name in ("kaggle", "kaggle.exe"):  # .exe on Windows
+        candidate = Path(sys.executable).parent / name
+        if candidate.exists():
+            return str(candidate)
     found = shutil.which("kaggle")
     if found:
         return found

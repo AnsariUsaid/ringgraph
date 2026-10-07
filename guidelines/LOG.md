@@ -38,3 +38,26 @@
 - Offline finding: client-mean smoothing (the Kaggle winners' post-processing) does NOT help here; validation picks alpha=1.0. TPR@1%FPR is dominated by a few high scores that the mean dilutes. Max-smoothing is tested separately (`offline_smoothing.json`).
 - Causal 14d: graph beats the control significantly (+0.023 at 1%FPR), larger than at 30d, because a shorter delay lets more confirmed fraud reach the features.
 - Do not commit `reports/graph_sweep.json`, `label_smoke.json`, `percolation.json` (scratch / regenerated).
+
+## 2026-10-07 22:00 offline max-smoothing result
+- Validation picked group=uid, mode=max, alpha=0.75 (val 0.654 vs 0.652 unsmoothed). Test, 5 seeds: L0 0.426, L3 0.556, L4 0.557 at 1%FPR; L4-L3 -0.0006 (CI [-0.004,+0.004], n.s.), at 0.1%FPR -0.009 (n.s.). Smoothing, mean or max, does not help here. L3-L0 +0.115* at 1%, +0.091* at 0.1% (this L0/L3-only rerun; the full ladder file reports L0->L3 +0.130).
+
+## 2026-10-07 22:00 causal 30d TUNED + ablations (reports/graph_sweep_tuned_d30.json, 5 seeds, test, * = CI excludes 0)
+- TPR@1%FPR full test: M1 0.426, control 0.538, graph 0.560. graph-M1 +0.120*, ctrl-M1 +0.093*, graph-ctrl +0.027* (CI +0.018..+0.035). Validation: m1 0.497, ctrl 0.596, graph 0.611.
+- TPR@0.1%FPR: M1 0.233, control 0.313, graph 0.310. graph-M1 +0.069*, but graph-ctrl -0.018 (n.s.). The untuned "graph helps at 0.1%" did NOT survive tuning: do not claim it.
+- Ablations at 1%FPR (M1 + one family): rs 0.434 (label-free behaviour, ~null), rl 0.553, rp 0.552 (2-hop adds nothing over rl), cp 0.448 (client profile alone small). Nearly all of the lift is delayed exposure (rl), i.e. own-client history plus cross-key exposure.
+- Strata: new_client (26.5k rows, 875 fraud): no model beats M1 significantly (graph-M1 +0.022 n.s.). linked (13.6k rows, 1,538 fraud): graph-M1 +0.047*, graph-ctrl +0.009 n.s. at 1%.
+- Causal 7d done (3 seeds, light): graph-M1 -0.021 n.s. on its first stratum, see reports/graph_sweep_tuned_d7.json.
+- Causal 90d (3 seeds, light, reports/graph_sweep_tuned_d90.json), TPR@1%FPR full test: M1 0.426, ctrl 0.472, graph 0.478. graph-M1 +0.041*, graph-ctrl +0.007 (n.s.). At 0.1%FPR nothing is significant. Longer delay = less confirmed fraud reaches the features, so the gain shrinks as expected.
+
+## 2026-10-07 22:12 all jobs finished; final causal table (98_summary.py, test, TPR@1%FPR, * = CI excludes 0)
+| delay | seeds | M1 | ctrl | graph | graph-M1 | graph-ctrl | 0.1%FPR M1 -> graph |
+|---|---|---|---|---|---|---|---|
+| 7d | 3 | 0.426 | 0.619 | 0.636 | +0.192* (+49%) | +0.016* | 0.233 -> 0.375 |
+| 14d | 5 | 0.426 | 0.584 | 0.603 | +0.165* (+42%) | +0.023* | 0.233 -> 0.336 |
+| 30d | 5 | 0.426 | 0.538 | 0.560 | +0.120* (+31%) | +0.027* | 0.233 -> 0.310 |
+| 60d | 3 | 0.426 | 0.501 | 0.509 | +0.065* (+19%) | +0.005 | 0.233 -> 0.268 |
+| 90d | 3 | 0.426 | 0.472 | 0.478 | +0.040* (+12%) | +0.007 | 0.233 -> 0.250 |
+- Correction: relative lifts are graph/M1-1 (14d +42%, 30d +31%); the chat figures +39% / +28% were miscomputed.
+- Graph beats control significantly at 7d/14d/30d (+0.016..+0.027), not at 60d/90d. Gain over M1 grows monotonically as the delay shrinks.
+- Kaggle test_transaction/test_identity (unlabeled, later period) deliberately not downloaded: useless for causal setting and evaluation, at most a small offline L1 gain.

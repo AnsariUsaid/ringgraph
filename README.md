@@ -14,6 +14,10 @@ the frontend. The headline result is a **null**: graph structure adds no
 measurable lift over a well-tuned tabular baseline. Ring *detection* works; ring
 structure does not improve per-transaction *prediction*.
 
+> **Update (session 2):** that null is for label-free structure. Adding *delayed fraud
+> labels* (fraud the bank already knew about) does lift detection; see
+> *Update: delayed-label results* under Findings below. The original text is kept as written.
+
 ## Stack
 
 | Layer | Choice |
@@ -73,6 +77,21 @@ diagnostics and the graph render — nothing in the result path depends on it.
 .venv/bin/python scripts/97_shuffle_sanity.py    # leakage check
 ```
 
+Delayed-label extension (session 2). Controls and graph models are tuned on validation
+only, with M1's search space. M1 is never changed.
+
+```bash
+.venv/bin/python scripts/83_label_features.py        # control lfc, device graph lfg, aggregates lfa
+.venv/bin/python scripts/84_relational_features.py   # rl delayed exposure, rs behaviour, rp 2-hop
+.venv/bin/python scripts/86_client_profile.py        # cp causal client profile
+.venv/bin/python scripts/87_offline_features.py      # whole-dataset label-free features (offline setting)
+.venv/bin/python scripts/94_tune_graph.py            # -> configs/tuned/ctrl_d30.toml, graph_d30.toml
+.venv/bin/python scripts/93_graph_sweep.py --config configs/tuned/m1.toml --delays 30 --ablations
+.venv/bin/python scripts/93_graph_sweep.py --config configs/tuned/m1.toml --delays 90 --seeds 11 22 33
+.venv/bin/python scripts/96_offline_ladder.py --config configs/tuned/m1.toml
+.venv/bin/python scripts/98_summary.py               # prints the table, writes reports/headline.json
+```
+
 `runs/index.jsonl` records every run with its resolved config and git commit.
 Generated artefacts are gitignored, with one deliberate exception: the ~7.6 MB
 the API actually reads is committed, so that a clone can run the demo without
@@ -124,6 +143,67 @@ prediction.** The negative result is the headline, and the machinery that makes
 it credible is the point: a temporal guard enforced as a test rather than a
 convention, a graph that never receives labels, and a measured training-noise
 floor that a single-run comparison would have hidden behind.
+
+### Update: delayed-label results
+
+The null above is for *label-free* graph structure. The extension below adds knowledge the
+bank genuinely had: a fraud label may enter a feature for a transaction at time *t* only if
+it was confirmed at or before *t* minus the chargeback delay (enforced by leakage tests).
+Three models are always shown side by side so the graph is never credited with what is
+really client history:
+
+- **normal (M1)**: one transaction at a time, unchanged.
+- **control**: M1 plus delayed history on tabular keys only (card1, addr1, email, uid).
+- **graph**: control plus shared-entity exposure, ring breadth and recency, neighbourhood
+  behaviour, two-hop propagation and a causal client profile.
+
+**Causal (deployable) setting**: only earlier rows and labels confirmed by *t*. Test split,
+TPR at 1% FPR, mean over seeds (5 for 14d/30d, 3 for 7d/60d/90d), paired bootstrap;
+`*` = 95% interval excludes zero.
+
+| Delay | normal (M1) | control | graph | graph vs normal | graph vs control | TPR@0.1%FPR, M1 to graph |
+|---|---|---|---|---|---|---|
+| 7d | 0.426 | 0.619 | 0.636 | +0.192* (+49%) | +0.016* | 0.233 to 0.375 |
+| 14d | 0.426 | 0.584 | 0.603 | +0.165* (+42%) | +0.023* | 0.233 to 0.336 |
+| **30d** (realistic) | 0.426 | 0.538 | 0.560 | +0.120* (+31%) | +0.027* | 0.233 to 0.310 |
+| 60d | 0.426 | 0.501 | 0.509 | +0.065* (+19%) | +0.005 | 0.233 to 0.268 |
+| 90d | 0.426 | 0.472 | 0.478 | +0.040* (+12%) | +0.007 | 0.233 to 0.250 |
+
+At 30d the graph catches 1,743 of the 3,114 test frauds against 1,327 for M1 at the
+same 1% false-alarm rate. At 14d, 1,877 against 1,327 (precision 0.69 against 0.61).
+
+**Offline / retrospective setting** (Kaggle-style: whole-dataset label-free aggregates,
+test labels never used; 30d delay, 5 seeds):
+
+| Level | TPR@1% | TPR@0.1% | $ recall@1% | precision@1% |
+|---|---|---|---|---|
+| L0 normal (M1) | 0.426 | 0.233 | 0.346 | 0.606 |
+| L1 + whole-dataset client aggregates | 0.500* | 0.254 | 0.410 | 0.644 |
+| L2 + own-client delayed history | 0.547* | 0.317* | 0.441 | 0.664 |
+| L3 + graph features | 0.556* | 0.331 | 0.456 | 0.668 |
+| L4 + client smoothing | 0.556 | 0.331 | 0.456 | 0.668 |
+
+Smoothing (mean or max, chosen on validation) adds nothing: L4 minus L3 is -0.0006 at 1% FPR.
+
+**Ablations at 30d, TPR@1%FPR** (M1 plus one family): label-free neighbourhood behaviour
+0.434, client profile 0.448, delayed multi-key exposure 0.553, plus two-hop 0.552. Nearly all
+of the lift is delayed exposure. Risk propagation was tested and dropped (no validation gain).
+
+**Honest attribution.**
+
+- Graph beats M1 by +12% to +49% relative, significantly, at every delay.
+- Most of that is delayed own-client history, a tabular key, which the control already has.
+  The graph's own contribution is smaller: +0.016 to +0.027 at 7d to 30d (significant), not
+  significant at 60d and 90d, and not significant at 0.1% FPR at 30d.
+- About 79% of fraud is first-time fraud with no link to any known fraud, so key-sharing links
+  cannot give a large margin over client history. For clients with no history, nothing helps.
+- The gain over M1 shrinks as the delay grows, because less confirmed fraud has reached the
+  features by the time a transaction arrives.
+- Tuned on validation only. Validation scores run higher than test for all three models
+  (30d: M1 0.497 to 0.426, control 0.596 to 0.538, graph 0.611 to 0.560), with similar gaps.
+
+Numbers: `reports/headline.json` (all of the above), `reports/graph_sweep_tuned_d*.json`,
+`reports/offline_ladder.json`, `reports/offline_smoothing.json`.
 
 ## Method notes
 

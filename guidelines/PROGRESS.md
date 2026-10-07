@@ -85,3 +85,8 @@ cd C:\Users\lohit\Desktop\RingGraph ; $env:PYTHONPATH="src"; $env:OMP_NUM_THREAD
 2. Put the final numbers in this file / README, commit, push only if the user says so that turn.
 3. Phase 4: API `/metrics/models` + results page read `reports/headline.json`; README Status/Findings/Reproducing.
 4. Optional (only if time and validation-justified): per-delay retune, refit on train+val, GNN.
+
+## 2026-10-07 22:12 — Session 2: ALL RUNS FINISHED
+Phase 2 done. Final numbers in LOG.md (22:12 table) and `reports/headline.json`. Headline: causal 30d M1 0.426 -> control 0.538 -> graph 0.560 at 1%FPR (graph-M1 +0.120*, graph-control +0.027*); 14d 0.603; 7d 0.636; gain fades at 60d/90d. Offline L0 0.426 -> L3 0.556; smoothing (mean or max) adds nothing. At 0.1%FPR graph-vs-control is n.s. at 30d: do not claim a graph gain there.
+Uncommitted: new `reports/graph_sweep_tuned_d{7,30,60,90}.json`, `offline_smoothing.json`, updated `headline.json`, guidelines edits. Skip regenerated edge_signal/profile/synchrony/runs index and scratch files.
+**Next step:** commit the above (only when the user says so), then Phase 4 (API `/metrics/models`, Results page, README). Optional: ring fraud-rate vs base rate check, per-delay retune, GNN. Do NOT push unless the user says so that turn.

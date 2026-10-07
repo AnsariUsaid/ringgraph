@@ -56,6 +56,7 @@ def test_smoothing_endpoints():
     g = np.array([0, 0, 1, 1])
     assert np.allclose(smooth_scores(s, g, 1.0), s)
     assert np.allclose(smooth_scores(s, g, 0.0), [0.5, 0.5, 0.3, 0.3])
+    assert np.allclose(smooth_scores(s, g, 0.0, mode="max"), [1.0, 1.0, 0.4, 0.4])
 
 
 def test_a_client_sits_in_one_component():

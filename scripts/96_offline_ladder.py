@@ -34,6 +34,7 @@ from fds.splits import Split
 
 SEEDS = [11, 22, 33, 44, 55]
 ALPHAS = (1.0, 0.75, 0.5, 0.25, 0.0)
+MODES = ("mean", "max")
 
 
 def table_columns(path, prefixes: tuple[str, ...]) -> list[str]:
@@ -46,6 +47,7 @@ def main() -> None:
     parser.add_argument("--delay", type=int, default=30)
     parser.add_argument("--graph-config", default=str(paths.CONFIGS_DIR / "tuned" / "graph_d30.toml"))
     parser.add_argument("--out", default="offline_ladder")
+    parser.add_argument("--levels", nargs="*", default=["L0", "L1", "L2", "L3"], help="train only these levels (L3 needs the L1/L2 columns, not their scores)")
     args = parser.parse_args()
     cfg = resolve(args)
     recipe, d = cfg.uid.recipe_name, args.delay
@@ -75,7 +77,7 @@ def main() -> None:
     l1 = m1 + cols(FE_PREFIX, AGG_PREFIX)
     l2 = l1 + cols(f"lfc{d}_")
     l3 = l2 + cols(GRAPH_PREFIX, f"lfg{d}_", f"lfa{d}_", f"rl{d}_", f"rp{d}_", "rs_", "cp_")
-    ladder = {"L0": m1, "L1": l1, "L2": l2, "L3": l3}
+    ladder = {k: v for k, v in {"L0": m1, "L1": l1, "L2": l2, "L3": l3}.items() if k in args.levels}
     schema.assert_no_denied_features(l3)
     print({k: len(v) for k, v in ladder.items()}, flush=True)
 
@@ -111,19 +113,20 @@ def main() -> None:
     val_g = {k: g[val_idx] for k, g in ((k, v) for k, v in groups.items())}
     test_g = {k: g[test_idx] for k, g in ((k, v) for k, v in groups.items())}
     v3, t3 = scores["L3"]
-    best, best_val = ("uid", 1.0), -1.0
+    best, best_val = ("uid", 1.0, "mean"), -1.0
     print("\nchoosing the smoothing on validation (mean TPR@1% over seeds):")
     for gname in groups:
-        for a in ALPHAS:
-            v = np.mean([evaluate(y_val, smooth_scores(r, val_g[gname], a))["tpr_at_fpr_1pct"] for r in v3])
-            print(f"   {gname:<10} alpha {a:<5} {v:.4f}")
-            if v > best_val:
-                best, best_val = (gname, a), v
-    print(f"chosen on validation: group={best[0]} alpha={best[1]}", flush=True)
-    scores["L4"] = (None, np.stack([smooth_scores(r, test_g[best[0]], best[1]) for r in t3]))
+        for mode in MODES:
+            for a in ALPHAS:
+                v = np.mean([evaluate(y_val, smooth_scores(r, val_g[gname], a, mode))["tpr_at_fpr_1pct"] for r in v3])
+                print(f"   {gname:<10} {mode:<5} alpha {a:<5} {v:.4f}")
+                if v > best_val:
+                    best, best_val = (gname, a, mode), v
+    print(f"chosen on validation: group={best[0]} alpha={best[1]} mode={best[2]}", flush=True)
+    scores["L4"] = (None, np.stack([smooth_scores(r, test_g[best[0]], best[1], best[2]) for r in t3]))
 
     rng = np.random.default_rng(cfg.seed)
-    report: dict = {"setting": "offline (retrospective)", "delay_days": d, "smoothing": {"group": best[0], "alpha": best[1]}, "levels": {}, "comparisons": {}}
+    report: dict = {"setting": "offline (retrospective)", "delay_days": d, "smoothing": {"group": best[0], "alpha": best[1], "mode": best[2]}, "levels": {}, "comparisons": {}}
     print(f"\n==== offline ladder, delay {d}d, test, mean over {len(args.seeds)} seeds ====")
     print(f"{'level':<7}{'TPR@1%':>9}{'TPR@0.1%':>10}{'PR-AUC':>9}{'$ recall@1%':>13}{'precision@1%':>14}{'alerts':>8}")
     for name, (_, s) in scores.items():
@@ -141,7 +144,7 @@ def main() -> None:
         print(f"{name:<7}{np.mean(report['levels'][name]['tpr_at_fpr_1pct']):>9.4f}{np.mean(report['levels'][name]['tpr_at_fpr_0.1pct']):>10.4f}"
               f"{np.mean([x['pr_auc'] for x in m]):>9.4f}{np.mean([x['dollar_recall'] for x in dp]):>13.4f}"
               f"{np.mean([x['precision'] for x in dp]):>14.4f}{np.mean([x['alerts'] for x in dp]):>8.0f}", flush=True)
-    for a, b in (("L0", "L1"), ("L1", "L2"), ("L2", "L3"), ("L3", "L4"), ("L0", "L4")):
+    for a, b in (p for p in (("L0", "L1"), ("L1", "L2"), ("L2", "L3"), ("L3", "L4"), ("L0", "L4"), ("L0", "L3")) if p[0] in scores and p[1] in scores):
         for k, fpr in (("tpr_at_fpr_1pct", 0.01), ("tpr_at_fpr_0.1pct", 0.001)):
             r = paired_bootstrap_difference(y, scores[a][1].mean(0), scores[b][1].mean(0), target_fpr=fpr, rng=rng, n_boot=300)
             report["comparisons"][f"{b}_minus_{a}_{k}"] = r

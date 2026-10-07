@@ -124,12 +124,13 @@ def build_offline(df: pd.DataFrame) -> pd.DataFrame:
     return table
 
 
-def smooth_scores(score: np.ndarray, groups: np.ndarray, alpha: float) -> np.ndarray:
-    """alpha * own score + (1 - alpha) * mean score of the rows in the same group.
+def smooth_scores(score: np.ndarray, groups: np.ndarray, alpha: float, mode: str = "mean") -> np.ndarray:
+    """alpha * own score + (1 - alpha) * the group's mean (or max) score.
 
     The winners replaced each transaction's score with its client's mean score:
-    alpha=0 is that, alpha=1 is no smoothing. Group means are over every row passed
-    in, future included -- the offline setting.
+    alpha=0, mode="mean" is that; alpha=1 is no smoothing. ``max`` flags every row of a
+    client that has one suspicious row. Group statistics are over every row passed in,
+    future included -- the offline setting.
     """
-    mean = pd.Series(score).groupby(groups).transform("mean").to_numpy()
-    return alpha * score + (1 - alpha) * mean
+    stat = pd.Series(score).groupby(groups).transform(mode).to_numpy()
+    return alpha * score + (1 - alpha) * stat

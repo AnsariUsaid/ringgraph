@@ -37,3 +37,28 @@ print(g.to_string())
 ev_t = ev.merge(rings[["ring_id", "first_day"]], on="ring_id")
 test = ev_t[ev_t.day >= 151]
 print(f"ring txns in the test period (day>=151): {len(test)}, fraud rate {test.is_fraud.mean():.4f}")
+
+# Committed summary the API serves (a clone has no data/base or data/uid).
+import json
+
+from fds import paths
+
+uid = pd.read_parquet("data/uid/recipe=v1_card1_addr1_d1n/map.parquet")
+base_clients = uid.merge(pd.read_parquet("data/base/transactions.parquet", columns=["TransactionID", "isFraud"]), on="TransactionID").groupby("uid").isFraud.max()
+summary = {
+    "n_rings": int(len(rings)),
+    "n_ring_clients": int(len(mem)),
+    "n_ring_fraud_clients": int(mem.is_fraud.sum()),
+    "ring_client_fraud_rate": float(mem.is_fraud.mean()),
+    "base_n_clients": int(len(base_clients)),
+    "base_client_fraud_rate": float(base_clients.mean()),
+    "ring_txn_fraud_rate": float(ev.is_fraud.mean()),
+    "base_txn_fraud_rate": float(tx_base),
+    "rings_with_fraud": int((rings.n_fraud_clients >= 1).sum()),
+    "rings_multi_fraud": int((rings.n_fraud_clients >= 2).sum()),
+    "rings_all_fraud": int((rings.fraud_rate == 1).sum()),
+    "rings_no_fraud": int((rings.n_fraud_clients == 0).sum()),
+    "fraud_clients_in_multi_fraud_rings": int(f.ring_id.isin(big).sum()),
+}
+paths.report_path("ring_summary.json").write_text(json.dumps(summary, indent=2))
+print("wrote", paths.report_path("ring_summary.json"))

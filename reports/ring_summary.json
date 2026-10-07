@@ -1,0 +1,15 @@
+{
+  "n_rings": 550,
+  "n_ring_clients": 4762,
+  "n_ring_fraud_clients": 917,
+  "ring_client_fraud_rate": 0.19256614867702646,
+  "base_n_clients": 217850,
+  "base_client_fraud_rate": 0.03725499196694974,
+  "ring_txn_fraud_rate": 0.09108331979860322,
+  "base_txn_fraud_rate": 0.03499000914417313,
+  "rings_with_fraud": 192,
+  "rings_multi_fraud": 112,
+  "rings_all_fraud": 12,
+  "rings_no_fraud": 358,
+  "fraud_clients_in_multi_fraud_rings": 837
+}

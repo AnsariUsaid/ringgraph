@@ -74,3 +74,8 @@
 - Share of mean |SHAP| on those 483: delayed exposure over many keys 34.9%, M1 tabular 34.1%, client profile 15.9%, own history (tabular keys) 7.7%, neighbourhood behaviour 4.1%, device-graph labels 2.1%, two-hop 1.1%.
 - Top features are all the client's own key: rl30_uid_mrate (1.62), rl30_uid_mrate60, lfc30_uid_rate, rl30_uid_recency. Cross-client device-graph features contribute only ~2-4%. This agrees with the attribution: the lift is mostly own-client confirmed-fraud history; do not present it as ring structure.
 - Per-delay retune skipped on purpose (expected thousandths; 7d/14d gaps already significant).
+
+## 2026-10-07 frontend made consistent with the results
+- Audit of hardcoded claims: ring/dataset/M1 numbers verified; Axis Atlas formulas for synchrony, concentration, tightness did not match src/fds/rings.py (fixed); the Pipeline gate figures came from a run at degree cap 50 (card1 -17.5 sd, 391x), the catalogue uses cap 10 (card1 +10.6 sd, 151x). Pipeline now states both; regenerated edge_signal.json and synchrony.json (band 2-10, weight 1) committed. profile.json regenerated differs only in tie order: not committed.
+- API: /metrics/summary (M1 + ring summary), /metrics/shap, ring sort=outlier (max axis percentile, labels never used), reports/ring_summary.json written by scripts/99.
+- Frontend: live stat strips, Overview finding IV + 8-step pipeline, Results sections 03 delayed / 04 attribution (ablation + SHAP) / 05 ring evidence (5x stat + scatter) / 06 operating point, Explore Outlier sort and same-time call-out, nav hint. Looks, layout, router and styles untouched. Not yet checked by eye.

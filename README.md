@@ -202,6 +202,18 @@ of the lift is delayed exposure. Risk propagation was tested and dropped (no val
 - Tuned on validation only. Validation scores run higher than test for all three models
   (30d: M1 0.497 to 0.426, control 0.596 to 0.538, graph 0.611 to 0.560), with similar gaps.
 
+**Link-band note (checked while building the frontend).** The "Usable links" row above comes from
+a run with a degree cap of 50, where card1 groups holding two or more fraud clients number 650
+against 950 expected (-17.5 sd): hub attributes are anti-predictive. The ring catalogue uses the
+degree 2-10, weight-1 band, and re-running `45_edge_signal.py` and `50_synchrony.py` at that band
+gives card1 73 against 27.8 expected (+10.6 sd) and 189 same-window bursts against a null of 1.25 in
+the smallest size band (151x; fraud-free components of the same size reach 46x). Both are real; the
+band decides the sign, which is why it is capped. Rings hold 19.3% fraud clients against 3.7% overall
+(5.2x) and 9.1% of transactions against 3.5% (2.6x); 112 of 550 rings hold 837 of their 917 fraud
+clients and 358 hold none (`scripts/99_ring_fraud_rate.py`, `reports/ring_summary.json`). SHAP on the
+30-day graph model (`scripts/100_shap_graph.py`) attributes the extra catches mainly to the client's
+own confirmed-fraud record (about 35% delayed exposure, 8% own history, 16% client profile, 2% device-graph labels).
+
 Numbers: `reports/headline.json` (all of the above), `reports/graph_sweep_tuned_d*.json`,
 `reports/offline_ladder.json`, `reports/offline_smoothing.json`.
 

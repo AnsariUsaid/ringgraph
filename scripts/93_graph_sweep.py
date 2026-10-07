@@ -33,7 +33,8 @@ from fds.splits import Split
 
 SEEDS = [11, 22, 33, 44, 55]
 FPRS = {"tpr_at_fpr_1pct": 0.01, "tpr_at_fpr_0.1pct": 0.001}
-VS = (("m1", "ctrl"), ("m1", "graph"), ("ctrl", "graph"), ("m1", "rs"), ("m1", "rl"), ("m1", "rp"))
+VS = (("m1", "ctrl"), ("m1", "graph"), ("ctrl", "graph"))  # headline pairs, every stratum
+VS_ABLATION = (("m1", "rs"), ("m1", "rl"), ("m1", "rp"), ("ctrl", "rl"), ("ctrl", "rp"))  # full test only
 
 
 def cols(df, prefix: str) -> list[str]:
@@ -110,7 +111,7 @@ def main() -> None:
         strata = {
             "full_test": np.ones_like(y, dtype=bool),
             "new_client": t_df["rs_uid_gap_log"].isna().to_numpy(),  # no earlier txn from this client
-            "linked": (t_df[f"{LABEL_PREFIX}{d}_n_keys_conf_x"] > 0).to_numpy(),  # other client on a key has confirmed fraud
+            "linked": (t_df[f"{LABEL_PREFIX}{d}_max_rate_x"] > 0.10).to_numpy(),  # another client on a key looks fraudulent (hub keys excluded by rate)
         }
         entry: dict = {"validation": {}}
         for name, (v, _) in models.items():
@@ -124,14 +125,14 @@ def main() -> None:
                 for k in FPRS:
                     block[f"{mname}_{k}"] = [p[k] for p in per_seed]
             for k, fpr in FPRS.items():
-                for a, b in VS:
+                for a, b in VS + (VS_ABLATION if sname == "full_test" else ()):
                     block[f"{b}_minus_{a}_{k}"] = paired_bootstrap_difference(
                         y[mask],
                         models[a][1].mean(0)[mask],
                         models[b][1].mean(0)[mask],
                         target_fpr=fpr,
                         rng=rng,
-                        n_boot=500,
+                        n_boot=300,
                     )
             entry[sname] = block
         report["delays"][str(d)] = entry

@@ -132,6 +132,34 @@ def _window_sum(ev, prefix, codes, t, window_s: int | None):
     return np.where(ok, prefix[hi] - prefix[lo], 0.0), np.where(ok, hi - lo, 0)
 
 
+_RECENT_DAYS = 60
+
+
+def _matured(codes: np.ndarray, t: np.ndarray, fraud: np.ndarray, delay_s: int):
+    """Counts over transactions whose label has matured (time <= t - delay).
+
+    Returns (n, frauds, n_recent, frauds_recent) per row; "recent" is the last
+    ``_RECENT_DAYS`` of matured transactions. Dividing by matured transactions
+    only, unlike ``conf / all prior``, does not count unlabelled-yet rows as clean.
+    """
+    ok = codes >= 0
+    safe = np.where(ok, codes, 0)
+    ev = np.sort(codes[ok] * _K + t[ok])
+    cev = np.sort(codes[ok & fraud] * _K + t[ok & fraud] + delay_s)
+    recent_s = _RECENT_DAYS * SECONDS_PER_DAY
+
+    def upto(events, cutoff):  # same-code events with time <= cutoff (cutoff clamped to -1)
+        c = np.maximum(cutoff, -1)
+        return np.searchsorted(events, safe * _K + c, "right") - np.searchsorted(events, safe * _K, "left")
+
+    n = upto(ev, t - delay_s)
+    n_old = upto(ev, t - delay_s - recent_s)
+    f = upto(cev, t)
+    f_old = upto(cev, t - recent_s)
+    z = np.zeros_like(n)
+    return tuple(np.where(ok, a, z) for a in (n, f, n - n_old, f - f_old))
+
+
 def label_exposure(df: pd.DataFrame, codes: dict[str, np.ndarray], delay_days: int):
     """``rl<D>_`` family, plus the per-row stage-1 suspicion used for propagation."""
     t = df[schema.TIME_RAW].to_numpy("int64")
@@ -150,9 +178,19 @@ def label_exposure(df: pd.DataFrame, codes: dict[str, np.ndarray], delay_days: i
         out[f"{base}_all_conf"], out[f"{base}_all_rate"] = conf, _rate(conf, prior)
         out[f"{base}_x_conf"], out[f"{base}_x_rate"] = cross_conf, _rate(cross_conf, cross_prior)
         rates.append(out[f"{base}_x_rate"])
+        n_a, f_a, nr_a, fr_a = _matured(kc, t, fraud, delay_s)
+        n_p, f_p, nr_p, fr_p = _matured(pair, t, fraud, delay_s)
+        out[f"{base}_all_mrate"] = _rate(f_a, n_a)
+        out[f"{base}_all_mrate60"] = _rate(fr_a, nr_a)
+        out[f"{base}_x_mrate"] = _rate(f_a - f_p, n_a - n_p)
+        out[f"{base}_x_mrate60"] = _rate(fr_a - fr_p, nr_a - nr_p)
+        out[f"{base}_x_mn"] = n_a - n_p
         n_conf_keys += cross_conf > 0
     own_prior, own_conf = _prior_and_confirmed(uid, t, fraud, delay_s)
     own_rate = _rate(own_conf, own_prior)
+    n_u, f_u, nr_u, fr_u = _matured(uid, t, fraud, delay_s)
+    out[f"{LABEL_PREFIX}{delay_days}_uid_mrate"] = _rate(f_u, n_u)
+    out[f"{LABEL_PREFIX}{delay_days}_uid_mrate60"] = _rate(fr_u, nr_u)
     out[f"{LABEL_PREFIX}{delay_days}_uid_conf"] = own_conf
     out[f"{LABEL_PREFIX}{delay_days}_uid_rate"] = own_rate
     out[f"{LABEL_PREFIX}{delay_days}_max_rate_x"] = np.max(rates, axis=0)

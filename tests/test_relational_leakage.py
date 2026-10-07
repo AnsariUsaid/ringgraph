@@ -81,3 +81,15 @@ def test_activity_and_amount_match_brute_force():
             assert np.isclose(table.loc[i, "rs_card1_amt_z"], z, atol=1e-2)
         else:
             assert np.isnan(table.loc[i, "rs_card1_amt_z"])
+
+
+def test_matured_rate_matches_brute_force():
+    df = _frame(seed=4)
+    table = build_relational(df, DELAYS)
+    for i in range(20, len(df), 41):
+        row = df.iloc[i]
+        t = row[schema.TIME_RAW]
+        mature = df[schema.TIME_RAW] <= t - D * SECONDS_PER_DAY
+        same = df["card1"] == row["card1"]
+        n, f = (mature & same).sum(), (mature & same & (df[schema.TARGET] == 1)).sum()
+        assert np.isclose(table.loc[i, f"rl{D}_card1_all_mrate"], (f + 0.035 * 20) / (n + 20), atol=1e-5)

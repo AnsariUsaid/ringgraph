@@ -21,3 +21,13 @@
 - Graph model = M1 + every relational family; headline fixed in advance, ablations reported alongside. Model choice never made on test.
 - "linked" stratum redefined by cross-client rate > 0.10 (hub keys made the count-based one cover 99.8% of rows).
 - Bootstrap trimmed (300 resamples, ablation pairs on full test only): it cost ~15 min per delay.
+
+## 2026-10-07 later decisions and problems
+- Two settings, reported separately: causal (deployable) and offline (Kaggle-style: whole-dataset label-free aggregates + client-mean smoothing; test labels never read).
+- Offline smoothing blend (client vs component, alpha) is chosen on validation only.
+- Parity: control and graph tuned with the identical search space, budget and objective as M1 (validation TPR@1%FPR); tuned once at 30d and reused at other delays; ablations reuse the graph parameters.
+- Memory: 15.7 GB RAM is the limit, not CPU (20 threads). Per-delay lean processes load only the columns they need; M1 scores are cached in `data/m1_scores.npz` and reused. Run parallel jobs with OMP_NUM_THREADS split (8-10 each).
+- Sensitivity delays 7/60/90 use 3 seeds to save time; 30d (headline) and 14d use 5.
+- Problems met: nested heredoc/escape bugs when generating scripts via python (use the Write/Edit tools); `--config` is already defined by `base_parser` (do not re-add).
+- Do not commit regenerated `reports/edge_signal.json`, `profile.json`, `synchrony.json` or `runs/index.jsonl` from pipeline reruns without checking the diff.
+- Untracked scratch outputs: `reports/label_smoke.json`, `reports/graph_sweep.json` (untuned v1), `reports/percolation.json`.

@@ -1,38 +1,39 @@
 # Tasks
 
-Legend: [x] done, [ ] todo, [~] in progress. Do in order unless stated.
+Legend: [x] done, [ ] todo, [~] running. Do in order unless stated.
 
-## Phase 0 — Environment and data
-- [x] Confirm `~/.kaggle/kaggle.json` exists; install `kaggle` in `.venv`
-- [x] Fix `scripts/00_download.py` for Windows (`kaggle.exe` next to interpreter)
-- [x] Download `train_transaction.csv`, `train_identity.csv` into `data/raw`
-- [~] Check GPU (RTX 3060 6GB, CUDA 13 driver OK; trainer choice pending, nothing installed yet); decide GPU trainer (XGBoost `device="cuda"` or LightGBM GPU build) — inside `.venv` only
-- [x] Run pipeline 10 -> 20 -> 30 -> 35 -> 40 -> 45 -> 48 -> 50 -> 80 (see README)
-- [x] Reproduce M1 (smoke/sweep M1 ~0.42-0.45 across seeds; committed 0.442) (`configs/tuned/m1.toml`, `scripts/70_train_m1.py`); compare to `reports/m1_tuned_metrics.json` (test TPR@1% ~0.442)
+## Phase 0 — Environment and data  (DONE)
+- [x] kaggle.json, kaggle in `.venv`, Windows download fix, data in `data/raw`
+- [x] Pipeline 10 -> 20 -> 30 -> 35 -> 40 -> 45 -> 48 -> 50 -> 80 (82 community skipped: slow, off the path)
+- [x] M1 reproduced in sweeps: test TPR@1% ~0.42-0.45 across seeds (committed 0.442). M1 is NEVER changed.
 
-## Phase 1 — Dynamic label knowledge (the main bet)
-- [x] `src/fds/label_features.py`: for each transaction at time t and delay D, from clients linked at that time, count/share of neighbours with a fraud label confirmed <= t - D; also ring-level (community) confirmed-fraud count
-- [x] `tests/test_label_leakage.py`: fails if any feature uses a label newer than t - D (mandatory)
-- [x] `scripts/83_label_features.py`: build table for D in {30, 60, 90}
-- [x] Control: same features from card1/addr1/email keys only (tabular target-encoding with delay)
-- [~] Train M3 = M1 + structural + label features; 5 seeds. Built as `scripts/93_graph_sweep.py` (needs tuned params from `scripts/94_tune_graph.py`, running)
+## Phase 1 — Dynamic label knowledge  (DONE)
+- [x] `label_features.py`, `relational_features.py`, `client_profile.py` + leakage tests (all pass: `pytest tests/test_*leakage* tests/test_client_profile.py tests/test_offline_features.py`)
+- [x] Control (tabular keys) built and tuned (`configs/tuned/ctrl_d30.toml`)
+- [x] Graph model tuned on validation with M1's search space (`configs/tuned/graph_d30.toml`, val 0.610 vs control 0.602)
+- [x] Risk propagation tried: no validation gain, dropped (kept in repo as a documented negative result)
 
-## Phase 2 — Better graph
-- [ ] Weighted links: rare shared attribute counts more (IDF) instead of hard degree ceiling 10; target coverage well above 2.4% of clients, largest component < 50%
-- [x] Multi-hop: 2-hop propagated suspicion (`rp` family in `src/fds/relational_features.py`)
-- [ ] Re-run Phase 1 on the new graph
+## Phase 2 — Evaluate and prove  (RUNNING; logs in %LOCALAPPDATA%\Temp)
+- [~] Causal 30d + ablations (rs, rl, rp, cp): `w1_causal_d30.log` -> `reports/graph_sweep_tuned_d30.json`
+- [~] Causal 14d: `w2_causal_d14.log`; then 60d, 7d, 90d (3 seeds): `w4_causal_d*.log`
+- [~] Offline ladder L0..L4: `w3_offline.log` -> `reports/offline_ladder.json`
+- [ ] When all finish: ONE summary table (offline vs causal, per delay, M1/control/graph; TPR@1%, TPR@0.1%, dollar recall, precision/alerts, bootstrap CIs)
+- [ ] State attribution honestly: own history (control) vs cross-client graph vs offline aggregates vs smoothing
 
-## Phase 3 — Evaluate and prove
-- [ ] Paired bootstrap + 5 seeds: M1 vs M2 vs M3 vs control, at 1% and 0.1% FPR
-- [ ] Strata: low-history clients, linked clients, rows with a confirmed-fraud neighbour
-- [ ] Delay sweep table 30/60/90 and an amount-weighted (dollar) view
-- [ ] Write `reports/*.json` the API/web can read
+## Phase 3 — Push the difference further (judge on validation only, never tune on test)
+- [ ] If graph-vs-control is still small: retune the graph per delay (7/14), more matured/recent-window features
+- [ ] Refit M1 and graph on train+val (more history) and report as a separate "refit" line
+- [ ] Optional: GNN (HGT/RGCN) on GPU (RTX 3060 6GB), install torch in `.venv` only; judge on validation first
+- [ ] Optional: SHAP on flagged payments for the demo
 
 ## Phase 4 — Show it
-- [ ] API: `/metrics/models` serves M3 + control; optional `POST /score`
-- [ ] Results page: M1 vs M3 headline, delay selector
-- [ ] README: update Status, Findings, Reproducing
+- [ ] Write `reports/headline.json` (small, committed) for the API/web: M1 / control / graph per delay + offline ladder
+- [ ] API `/metrics/models` serves M1, control, graph, ladder; Results page: three-bar headline, delay selector, "what is control / graph" explainer
+- [ ] README: update Status, Findings, Reproducing (scripts 83-87, 93, 94, 96) and the two settings
+- [ ] Commit only small artefacts; `data/` stays ignored
 
-## Phase 5 — Optional (only if time)
-- [ ] GNN (HGT/RGCN) on GPU, install torch into `.venv`
-- [ ] SHAP explanations on flagged payments
+## How to proceed after the runs finish (checklist for the next session)
+1. `git status`; read `reports/graph_sweep_tuned_d30.json` and `reports/offline_ladder.json`.
+2. Build the summary table (Phase 2). If a log shows a Traceback, fix it and rerun only that job.
+3. Update `guidelines/PROGRESS.md` and `LOG.md` with the final numbers, commit, push only if the user says so that turn.
+4. Then Phase 4 (headline.json, API, results page, README).

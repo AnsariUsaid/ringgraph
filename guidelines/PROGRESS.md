@@ -28,3 +28,18 @@
 - Reading: most of the gain is delayed own-client history (a tabular key). Graph adds a small, real gain mainly at the strict 0.1% FPR. Untuned models stop at ~60-100 rounds, so graph/control are being tuned with M1's search space (`94_tune_graph.py`, validation only).
 
 **Next step:** when `/tmp/tune.log` finishes, run `scripts/93_graph_sweep.py --config configs/tuned/m1.toml --ctrl-config configs/tuned/ctrl_d30.toml --graph-config configs/tuned/graph_d30.toml` (all delays), then write the result into README/results page.
+
+## 2026-10-07 — Session 2 (end of session state)
+Built and tested: delayed-label features (control + device graph), relational families (rl/rs/rp), matured-label rates, ring breadth + recency, causal client profile (winning-solution idea, past rows only), offline whole-dataset features + prediction smoothing. All leakage/brute-force tests pass.
+
+Findings (validation/test as noted):
+- Untuned, delay 30d, test TPR@1%FPR (5 seeds): M1 0.4245, control 0.5294, graph 0.5324. graph-M1 +0.103 (CI excl. 0); graph-control +0.008 (n.s.). At 0.1%FPR: M1 0.233, control 0.286, graph 0.295; graph-control +0.035 (CI excl. 0). New clients (no own history): nothing helps.
+- Diagnostics (validation): own history covers ~21% of fraud under every identity definition tried (9 variants); of the 1,210 val fraud rows the control misses, almost none share a device with known fraud. So ~79% of fraud is first-time and unlinkable; no massive graph-over-history gap exists in key-sharing links.
+- Risk propagation (rq): validation gain -0.003 (TPR@1%), dropped. Client profile (cp): +0.008 val TPR@1%, kept.
+- Tuning with M1's search space: control val 0.602 (0.576 untuned), graph val 0.610.
+- Kaggle winners (public write-ups): same UID (card1, addr1, day-D1), ~47 per-client aggregates over ALL rows incl. future, final prediction replaced by the client mean. The causal setting cannot use future rows, hence the separate offline setting.
+
+Running at hand-off (logs in %LOCALAPPDATA%\Temp; `Get-Content <log> -Wait -Tail 25`):
+`w1_causal_d30.log` (ablations), `w2_causal_d14.log`, `w3_offline.log`; queued: `w4_causal_d60/d7/d90.log` (3 seeds). Error found and fixed this session: duplicate `--config` in script 96 (the offline ladder had crashed at start).
+
+**Next step:** wait for the jobs, build the single summary table, record numbers in LOG.md, then Phase 4 (headline.json, API, results page, README). Do NOT push unless the user says so that turn.

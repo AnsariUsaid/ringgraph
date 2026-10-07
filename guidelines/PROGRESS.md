@@ -94,3 +94,7 @@ Uncommitted: new `reports/graph_sweep_tuned_d{7,30,60,90}.json`, `offline_smooth
 ## 2026-10-07 — Phase 4 done
 Results + README + logs committed and pushed (b68c049). API `/metrics/models` returns `delayed` (headline.json); Results page has a new section 03 (delay selector, M1/control/graph bars with CI, offline ladder, attribution note). Typecheck, lint and vite build pass; endpoint checked by calling the function (TestClient needs httpx2, not installed). The page has not been looked at in a browser.
 **Next step:** look at the page (`uvicorn api.main:app --port 8000` + `npm run dev --prefix web`), optionally ring fraud-rate check, per-delay retune, GNN.
+
+## 2026-10-07 — BACKEND FINAL
+All backend work is done and committed: causal sweeps 7/14/30/60/90d, offline ladder and smoothing, ablations, `reports/headline.json`, ring fraud-rate check (`scripts/99`, rings hold ~5x the base client fraud rate, 358 of 550 rings have no fraud), SHAP on the 30d graph model (`scripts/100`, `reports/shap_graph_d30.json`: the lift is mostly own-client history, cross-client links ~2-4% of SHAP). API `/metrics/models` returns `delayed`. Per-delay retune skipped (expected thousandths). GNN not attempted.
+**Next step:** frontend only. Overview and Results still tell the old M1-only / null story; `/explore` is fine. See the frontend assessment in chat; decide scope with the user first. Do NOT push unless the user says so that turn.

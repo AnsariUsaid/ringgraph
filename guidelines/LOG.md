@@ -68,3 +68,9 @@
 - Ranking by structure only (composite, labels excluded): top 25 rings 32.5% fraud clients, top 50 24.5%, top 100 17.7%. Only the very top beats the all-ring average (19.3%), consistent with the size-controlled axes result.
 - Rings are retrospective (built over the full period, not a causal detector). Fraud rate in ring transactions in the test period (day>=151): 8.9%.
 - Safe wording: "the graph groups clients into candidate rings; clients in them are about 5x more likely to be fraudulent than the base rate". Not "we detect rings" as an evaluated detector, and 358 of 550 rings have no fraud.
+
+## 2026-10-07 SHAP on the graph model (scripts/100_shap_graph.py, reports/shap_graph_d30.json; one seed-11 model, tuned graph params, nothing tuned)
+- Test TPR@1% 0.561 (sweep mean 0.560). 2,610 flagged, 1,747 frauds caught, 483 of them missed by M1.
+- Share of mean |SHAP| on those 483: delayed exposure over many keys 34.9%, M1 tabular 34.1%, client profile 15.9%, own history (tabular keys) 7.7%, neighbourhood behaviour 4.1%, device-graph labels 2.1%, two-hop 1.1%.
+- Top features are all the client's own key: rl30_uid_mrate (1.62), rl30_uid_mrate60, lfc30_uid_rate, rl30_uid_recency. Cross-client device-graph features contribute only ~2-4%. This agrees with the attribution: the lift is mostly own-client confirmed-fraud history; do not present it as ring structure.
+- Per-delay retune skipped on purpose (expected thousandths; 7d/14d gaps already significant).

@@ -1,0 +1,268 @@
+{
+  "delay_days": 30,
+  "seed": 11,
+  "n_features": 909,
+  "test_tpr_at_1pct_fpr": 0.561014771997431,
+  "flagged": 2610,
+  "frauds_caught": 1747,
+  "caught_only_by_graph": 483,
+  "family_share_all_flagged": {
+    "M1 tabular": 0.5338777539537543,
+    "delayed exposure, many keys": 0.19954173911084297,
+    "client profile": 0.1399409472943256,
+    "neighbourhood behaviour": 0.048000547342944795,
+    "own history (tabular keys)": 0.03275703704125432,
+    "device-graph labels": 0.03139029014641295,
+    "two-hop propagation": 0.011798145335724855,
+    "label aggregates": 0.0026935397747403274
+  },
+  "family_share_caught_only_by_graph": {
+    "delayed exposure, many keys": 0.34885798876626223,
+    "M1 tabular": 0.3406972508754046,
+    "client profile": 0.15943131954181694,
+    "own history (tabular keys)": 0.07669796001510366,
+    "neighbourhood behaviour": 0.04143542128274499,
+    "device-graph labels": 0.020767976785600988,
+    "two-hop propagation": 0.010532541373668405,
+    "label aggregates": 0.00157954135939835
+  },
+  "top_features_caught_only_by_graph": [
+    {
+      "feature": "rl30_uid_mrate",
+      "family": "delayed exposure, many keys",
+      "mean_abs_shap": 1.6199523903378996
+    },
+    {
+      "feature": "rl30_uid_mrate60",
+      "family": "delayed exposure, many keys",
+      "mean_abs_shap": 0.7896751346073166
+    },
+    {
+      "feature": "lfc30_uid_rate",
+      "family": "own history (tabular keys)",
+      "mean_abs_shap": 0.6385622693787069
+    },
+    {
+      "feature": "V258",
+      "family": "M1 tabular",
+      "mean_abs_shap": 0.3035961541349339
+    },
+    {
+      "feature": "rl30_uid_recency",
+      "family": "delayed exposure, many keys",
+      "mean_abs_shap": 0.26994116808970087
+    },
+    {
+      "feature": "C13",
+      "family": "M1 tabular",
+      "mean_abs_shap": 0.2059655223004222
+    },
+    {
+      "feature": "rl30_uid_rate",
+      "family": "delayed exposure, many keys",
+      "mean_abs_shap": 0.19630187302787708
+    },
+    {
+      "feature": "C1",
+      "family": "M1 tabular",
+      "mean_abs_shap": 0.1794124607864306
+    },
+    {
+      "feature": "C14",
+      "family": "M1 tabular",
+      "mean_abs_shap": 0.14744774685768397
+    },
+    {
+      "feature": "V70",
+      "family": "M1 tabular",
+      "mean_abs_shap": 0.11497789137505839
+    },
+    {
+      "feature": "lfc30_uid_conf",
+      "family": "own history (tabular keys)",
+      "mean_abs_shap": 0.10431418655747758
+    },
+    {
+      "feature": "P_emaildomain",
+      "family": "M1 tabular",
+      "mean_abs_shap": 0.09548898627273969
+    },
+    {
+      "feature": "DeviceInfo",
+      "family": "M1 tabular",
+      "mean_abs_shap": 0.08938202953022864
+    },
+    {
+      "feature": "card6",
+      "family": "M1 tabular",
+      "mean_abs_shap": 0.08781398635683188
+    },
+    {
+      "feature": "C11",
+      "family": "M1 tabular",
+      "mean_abs_shap": 0.08738450573833674
+    }
+  ],
+  "examples": [
+    {
+      "test_row": 133,
+      "score": 0.9807867751665972,
+      "m1_score": 0.13699454941333133,
+      "top_features": [
+        {
+          "feature": "rl30_uid_mrate",
+          "family": "delayed exposure, many keys",
+          "shap": 2.5058664222239737
+        },
+        {
+          "feature": "lfc30_uid_rate",
+          "family": "own history (tabular keys)",
+          "shap": 1.372075208344827
+        },
+        {
+          "feature": "rl30_uid_mrate60",
+          "family": "delayed exposure, many keys",
+          "shap": 1.138751477277808
+        },
+        {
+          "feature": "rl30_uid_recency",
+          "family": "delayed exposure, many keys",
+          "shap": 0.4669334059012709
+        },
+        {
+          "feature": "rl30_uid_rate",
+          "family": "delayed exposure, many keys",
+          "shap": 0.3381280784424847
+        }
+      ]
+    },
+    {
+      "test_row": 259,
+      "score": 0.8673710172737817,
+      "m1_score": 0.05738387482297057,
+      "top_features": [
+        {
+          "feature": "rl30_uid_mrate",
+          "family": "delayed exposure, many keys",
+          "shap": 1.8268476897239008
+        },
+        {
+          "feature": "rl30_uid_mrate60",
+          "family": "delayed exposure, many keys",
+          "shap": 1.111972171888787
+        },
+        {
+          "feature": "lfc30_uid_rate",
+          "family": "own history (tabular keys)",
+          "shap": 0.921033117748491
+        },
+        {
+          "feature": "rl30_uid_recency",
+          "family": "delayed exposure, many keys",
+          "shap": 0.5699798714414744
+        },
+        {
+          "feature": "rl30_uid_rate",
+          "family": "delayed exposure, many keys",
+          "shap": 0.3212326233952533
+        }
+      ]
+    },
+    {
+      "test_row": 261,
+      "score": 0.9662793799801764,
+      "m1_score": 0.1390669392635761,
+      "top_features": [
+        {
+          "feature": "rl30_uid_mrate",
+          "family": "delayed exposure, many keys",
+          "shap": 2.0497137628607116
+        },
+        {
+          "feature": "rl30_uid_mrate60",
+          "family": "delayed exposure, many keys",
+          "shap": 1.1513954653963385
+        },
+        {
+          "feature": "lfc30_uid_rate",
+          "family": "own history (tabular keys)",
+          "shap": 0.781508225589226
+        },
+        {
+          "feature": "rl30_uid_recency",
+          "family": "delayed exposure, many keys",
+          "shap": 0.5447286572193678
+        },
+        {
+          "feature": "V294",
+          "family": "M1 tabular",
+          "shap": 0.39990082495231705
+        }
+      ]
+    },
+    {
+      "test_row": 413,
+      "score": 0.7829230105981552,
+      "m1_score": 0.003910628206703335,
+      "top_features": [
+        {
+          "feature": "rl30_uid_mrate",
+          "family": "delayed exposure, many keys",
+          "shap": 1.209769665004635
+        },
+        {
+          "feature": "C13",
+          "family": "M1 tabular",
+          "shap": 0.9708949063486556
+        },
+        {
+          "feature": "lfc30_uid_rate",
+          "family": "own history (tabular keys)",
+          "shap": 0.6783679898106265
+        },
+        {
+          "feature": "C14",
+          "family": "M1 tabular",
+          "shap": 0.41779153801694496
+        },
+        {
+          "feature": "rl30_uid_mrate60",
+          "family": "delayed exposure, many keys",
+          "shap": 0.38221813181670794
+        }
+      ]
+    },
+    {
+      "test_row": 503,
+      "score": 0.9536777936247226,
+      "m1_score": 0.16816702874679268,
+      "top_features": [
+        {
+          "feature": "rl30_uid_mrate",
+          "family": "delayed exposure, many keys",
+          "shap": 1.7132957053393765
+        },
+        {
+          "feature": "rl30_uid_mrate60",
+          "family": "delayed exposure, many keys",
+          "shap": 0.802639527362859
+        },
+        {
+          "feature": "lfc30_uid_rate",
+          "family": "own history (tabular keys)",
+          "shap": 0.7614176309276457
+        },
+        {
+          "feature": "C1",
+          "family": "M1 tabular",
+          "shap": 0.7245584539040845
+        },
+        {
+          "feature": "rl30_uid_rate",
+          "family": "delayed exposure, many keys",
+          "shap": 0.3035423707445692
+        }
+      ]
+    }
+  ]
+}

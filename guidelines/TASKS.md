@@ -23,10 +23,10 @@ Legend: [x] done, [ ] todo, [~] running. Do in order unless stated.
 - [x] State attribution honestly: README "Honest attribution" + Results page note (own history vs cross-client graph vs offline aggregates vs smoothing)
 
 ## Phase 3 — Push the difference further (judge on validation only, never tune on test)
-- [ ] If graph-vs-control is still small: retune the graph per delay (7/14), more matured/recent-window features
+- [x] Per-delay retune: skipped on purpose (expected thousandths, 7d/14d gaps already significant)
 - [ ] Refit M1 and graph on train+val (more history) and report as a separate "refit" line
 - [ ] Optional: GNN (HGT/RGCN) on GPU (RTX 3060 6GB), install torch in `.venv` only; judge on validation first
-- [ ] Optional: SHAP on flagged payments for the demo
+- [x] SHAP on flagged payments: scripts/100_shap_graph.py -> reports/shap_graph_d30.json (not yet in the demo)
 
 ## Phase 4 — Show it
 - [x] `reports/headline.json` written by 98_summary.py (committed)

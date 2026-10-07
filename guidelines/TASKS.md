@@ -14,10 +14,12 @@ Legend: [x] done, [ ] todo, [~] running. Do in order unless stated.
 - [x] Risk propagation tried: no validation gain, dropped (kept in repo as a documented negative result)
 
 ## Phase 2 — Evaluate and prove  (RUNNING; logs in %LOCALAPPDATA%\Temp)
-- [~] Causal 30d + ablations (rs, rl, rp, cp): `w1_causal_d30.log` -> `reports/graph_sweep_tuned_d30.json`
-- [~] Causal 14d: `w2_causal_d14.log`; then 60d, 7d, 90d (3 seeds): `w4_causal_d*.log`
-- [~] Offline ladder L0..L4: `w3_offline.log` -> `reports/offline_ladder.json`
-- [ ] When all finish: ONE summary table (offline vs causal, per delay, M1/control/graph; TPR@1%, TPR@0.1%, dollar recall, precision/alerts, bootstrap CIs)
+- [~] Causal 30d + ablations (rs, rl, rp, cp): `w1_causal_d30.log` -> `reports/graph_sweep_tuned_d30.json` (REQUIRED)
+- [x] Causal 14d (5 seeds): normal 0.426, control 0.584, graph 0.603 at 1%FPR; graph-control +0.023* -> `reports/graph_sweep_tuned_d14.json`
+- [~] Causal 90d, 60d, 7d (3 seeds, light mode; low value, kept to report every delay): `w4_causal_d*.log`
+- [x] Offline ladder L0..L4 -> `reports/offline_ladder.json` (L0 0.426 -> L3 0.556 at 1%FPR; mean-smoothing hurt)
+- [~] Offline max-smoothing check (validation-chosen): `w5_smoothing.log` -> `reports/offline_smoothing.json`
+- [x] `scripts/98_summary.py` prints the one table and writes `reports/headline.json` (rerun when jobs finish)
 - [ ] State attribution honestly: own history (control) vs cross-client graph vs offline aggregates vs smoothing
 
 ## Phase 3 — Push the difference further (judge on validation only, never tune on test)

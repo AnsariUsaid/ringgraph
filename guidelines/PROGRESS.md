@@ -43,3 +43,45 @@ Running at hand-off (logs in %LOCALAPPDATA%\Temp; `Get-Content <log> -Wait -Tail
 `w1_causal_d30.log` (ablations), `w2_causal_d14.log`, `w3_offline.log`; queued: `w4_causal_d60/d7/d90.log` (3 seeds). Error found and fixed this session: duplicate `--config` in script 96 (the offline ladder had crashed at start).
 
 **Next step:** wait for the jobs, build the single summary table, record numbers in LOG.md, then Phase 4 (headline.json, API, results page, README). Do NOT push unless the user says so that turn.
+
+## 2026-10-07 — Session 2 HAND-OFF (read this first in a fresh chat)
+
+### Results in hand (test split, 5 seeds unless noted, paired bootstrap; `*` = 95% CI excludes 0)
+Offline / retrospective ladder, delay 30d (`reports/offline_ladder.json`):
+
+| level | TPR@1%FPR | TPR@0.1%FPR | $ recall@1% | precision@1% |
+|---|---|---|---|---|
+| L0 normal (M1) | 0.426 | 0.233 | 0.346 | 0.606 |
+| L1 + whole-dataset client aggregates | 0.500* | 0.254 | 0.410 | 0.644 |
+| L2 + own-client delayed history | 0.547* | 0.317* | 0.441 | 0.664 |
+| L3 + graph features | 0.556* | 0.331 | 0.456 | 0.668 |
+| L4 + client-mean smoothing | 0.556 | 0.331 | 0.456 | 0.668 |
+
+L0->L3: +0.130 at 1% (+31% rel), +0.098 at 0.1% (+42% rel). Graph step alone (L3-L2): +0.012* at 1%, ~0 at 0.1%. Client-MEAN smoothing hurt on validation (0.652 -> 0.541 at alpha 0), so validation chose no smoothing. A max-smoothing variant is queued (see below).
+
+Causal / deployable, delay 14d (`reports/graph_sweep_tuned_d14.json`): normal 0.426, control 0.584, graph 0.603 at 1%FPR. graph-normal +0.165* (+42% rel); graph-control +0.023* (the graph beats the tabular-key control significantly). At 0.1%FPR: normal 0.233, graph 0.336.
+
+Causal 30d (untuned run earlier): normal 0.4245, control 0.529, graph 0.532 (+0.103*, +25% rel; graph-control +0.008 n.s.; at 0.1%FPR graph-control +0.035*). The TUNED 30d numbers with ablations are being produced (`reports/graph_sweep_tuned_d30.json`).
+
+Honest attribution: most of the gain over normal is own-client delayed history (the control, a tabular key). Cross-client graph links add a smaller, significant gain (+0.023 at 14d, +0.012 offline). ~79% of fraud is first-time with no link to known fraud, so a massive graph-over-history gap is not available; do not claim one.
+
+### Still running when this was written (21:50 IST) — logs in %LOCALAPPDATA%\Temp, tail with `Get-Content <log> -Wait -Tail 25`
+- `w1_causal_d30.log`: realistic 30d + ablations (rs, rl, rp, cp) -> then `w4_causal_d90.log`, `w4_causal_d60.log` (3 seeds, light mode).
+- `w5_smoothing.log`: offline L0+L3 with mean/max smoothing grid chosen on validation -> `reports/offline_smoothing.json`.
+- then `w4_causal_d7.log` (3 seeds). ETA all done ~22:25.
+If a log has no recent write and no python is running (check Task Manager / `Get-Process python`), the jobs died (PC crash or chat teardown). Restart only what is missing:
+```
+cd C:\Users\lohit\Desktop\RingGraph ; $env:PYTHONPATH="src"; $env:OMP_NUM_THREADS="10"
+.venv\Scripts\python.exe -u scripts\93_graph_sweep.py --config configs\tuned\m1.toml --delays 30 --ablations > $env:TEMP\w1_causal_d30.log
+.venv\Scripts\python.exe -u scripts\93_graph_sweep.py --config configs\tuned\m1.toml --delays 90 --seeds 11 22 33
+.venv\Scripts\python.exe -u scripts\93_graph_sweep.py --config configs\tuned\m1.toml --delays 60 --seeds 11 22 33
+.venv\Scripts\python.exe -u scripts\93_graph_sweep.py --config configs\tuned\m1.toml --delays 7 --seeds 11 22 33
+.venv\Scripts\python.exe -u scripts\96_offline_ladder.py --config configs\tuned\m1.toml --levels L0 L3 --out offline_smoothing
+```
+(Run at most two at once: 15.7 GB RAM is the limit. M1 scores are cached in `data/m1_scores.npz`.)
+
+### What to do next
+1. When jobs finish: `PYTHONPATH=src .venv\Scripts\python.exe scripts\98_summary.py` (prints the table, writes `reports/headline.json`).
+2. Put the final numbers in this file / README, commit, push only if the user says so that turn.
+3. Phase 4: API `/metrics/models` + results page read `reports/headline.json`; README Status/Findings/Reproducing.
+4. Optional (only if time and validation-justified): per-delay retune, refit on train+val, GNN.

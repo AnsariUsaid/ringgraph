@@ -128,8 +128,9 @@ def main() -> None:
         }
         pairs = tuple(p for p in HEADLINE + ABLATION if p[0] in models and p[1] in models)
         entry: dict = {"validation_tpr_1pct": {m: float(np.mean([evaluate(y_val, r)["tpr_at_fpr_1pct"] for r in v])) for m, (v, _) in models.items()}}
+        light = len(args.seeds) < 5  # sensitivity delays: headline pairs on the full test set only
         for sname, mask in strata.items():
-            if y[mask].sum() < 30:
+            if y[mask].sum() < 30 or (light and sname != "full_test"):
                 continue
             block = {"n": int(mask.sum()), "n_fraud": int(y[mask].sum())}
             for mname, (_, s) in models.items():

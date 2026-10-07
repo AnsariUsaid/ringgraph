@@ -31,3 +31,10 @@
 - Problems met: nested heredoc/escape bugs when generating scripts via python (use the Write/Edit tools); `--config` is already defined by `base_parser` (do not re-add).
 - Do not commit regenerated `reports/edge_signal.json`, `profile.json`, `synchrony.json` or `runs/index.jsonl` from pipeline reruns without checking the diff.
 - Untracked scratch outputs: `reports/label_smoke.json`, `reports/graph_sweep.json` (untuned v1), `reports/percolation.json`.
+
+## 2026-10-07 final-stretch notes
+- PC crash (20 browser tabs) killed all background jobs ~21:30; code was intact (all committed). Restarted; the d30/d14 runs lost ~6 min of work. Stopped Phone Link and OneDrive sync to free ~0.3 GB (restart OneDrive from Start if wanted).
+- Time/priority decision (user asked what is really needed): REQUIRED = causal 30d (+ablations) and the offline ladder; NICE = 14d and the max-smoothing check; LOW VALUE = 7/60/90d, kept only to honour "report every delay", trimmed to 3 seeds and full-test-only bootstrap ("light" mode when --seeds < 5). The bootstrap, not training, dominates runtime (10-15 min per delay).
+- Offline finding: client-mean smoothing (the Kaggle winners' post-processing) does NOT help here; validation picks alpha=1.0. TPR@1%FPR is dominated by a few high scores that the mean dilutes. Max-smoothing is tested separately (`offline_smoothing.json`).
+- Causal 14d: graph beats the control significantly (+0.023 at 1%FPR), larger than at 30d, because a shorter delay lets more confirmed fraud reach the features.
+- Do not commit `reports/graph_sweep.json`, `label_smoke.json`, `percolation.json` (scratch / regenerated).

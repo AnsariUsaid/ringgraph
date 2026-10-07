@@ -13,9 +13,11 @@ Win condition: a graph-augmented model beats M1 on TPR @ 1% FPR (and 0.1%) on th
 temporal test split, across 5 seeds, paired-bootstrap CI on the difference
 excluding zero, with a leakage test proving no future label was used.
 
-**Status (end of session 2):** achieved in the realistic (causal) setting at the
-30-day delay, about +10 points / +25% relative over M1 (untuned numbers; final tuned
-numbers are in `reports/graph_sweep_tuned_d*.json`). Most of it is own-client delayed
+**Status (end of session 2):** achieved. Causal 14d: normal 0.426 -> graph 0.603 TPR@1%FPR
+(+42% relative, graph beats the control by +0.023, significant). Causal 30d untuned: +0.103
+(+25%). Offline ladder 30d: 0.426 -> 0.556 (+31%). Final tuned numbers:
+`reports/graph_sweep_tuned_d*.json`, `reports/offline_ladder.json`, summary via
+`scripts/98_summary.py`. READ `PROGRESS.md` (HAND-OFF section) first. Most of it is own-client delayed
 history (the control); cross-client graph links add a small, significant gain mainly at
 0.1% FPR. Never claim the whole gain is "graph": always show M1 / control / graph side by
 side. Measured ceiling: ~79% of fraud is first-time fraud with no link to any known

@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { api, queryKeys } from "../api/client";
+import type { DelayedHeadline, Difference } from "../api/types";
 import { StatePanel } from "../components/StatePanel";
 import { Reveal } from "../components/Reveal";
 import { CountUp } from "../components/CountUp";
@@ -64,6 +65,145 @@ function Head({ index, title, blurb }: { index: string; title: React.ReactNode; 
         </p>
       )}
     </Reveal>
+  );
+}
+
+const DELAYED_MODELS = [
+  { key: "m1", label: "normal (M1)", note: "one transaction at a time", colour: "var(--ink-4)" },
+  { key: "ctrl", label: "control", note: "M1 plus the client's own confirmed-fraud history", colour: "var(--risk-1)" },
+  { key: "graph", label: "graph", note: "control plus shared-entity and ring links", colour: "var(--risk-4)" },
+] as const;
+
+const OFFLINE_LEVELS: Record<string, string> = {
+  L0: "normal (M1)",
+  L1: "+ whole-dataset client aggregates",
+  L2: "+ own-client delayed history",
+  L3: "+ graph features",
+  L4: "+ client smoothing",
+};
+
+function diffText(d?: Difference) {
+  if (!d) return "n/a";
+  const sign = d.observed_difference >= 0 ? "+" : "";
+  return `${sign}${(d.observed_difference * 100).toFixed(1)} pts [${(d.ci_low * 100).toFixed(1)}, ${(d.ci_high * 100).toFixed(1)}]`;
+}
+
+/** M1 against the control and the graph model, per chargeback delay. Three bars,
+ *  not one, on purpose: most of the gain is the client's own history, which the
+ *  control already has, and the page should never let the graph take that credit. */
+function Delayed({ data }: { data: DelayedHeadline }) {
+  const delays = Object.keys(data.causal).sort((a, b) => Number(a) - Number(b));
+  const [delay, setDelay] = useState(delays.includes("30") ? "30" : delays[0]);
+  const row = data.causal[delay];
+  const comparisons: [string, Difference | undefined][] = [
+    ["graph vs normal", row.comparisons["graph_minus_m1_tpr_at_fpr_1pct"]],
+    ["graph vs control", row.comparisons["graph_minus_ctrl_tpr_at_fpr_1pct"]],
+  ];
+
+  return (
+    <section style={{ padding: "76px 0 0" }}>
+      <Head
+        index="03"
+        title={<>With delayed <em>fraud labels</em>.</>}
+        blurb="A fraud label may be used for a transaction only once it was confirmed, one chargeback delay earlier. The control gets the client's own history; the graph model adds links between clients. Mean over seeds on the test split; the interval is a paired bootstrap on the difference."
+      />
+      <Reveal>
+        <div className="card" style={{ padding: "22px 26px 26px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+            <span className="caps" style={{ marginRight: 6 }}>chargeback delay</span>
+            {delays.map((d) => (
+              <button
+                key={d}
+                onClick={() => setDelay(d)}
+                aria-pressed={d === delay}
+                className="mono"
+                style={{
+                  padding: "5px 12px",
+                  fontSize: 12.5,
+                  borderRadius: 999,
+                  cursor: "pointer",
+                  border: "1px solid var(--rule-strong)",
+                  background: d === delay ? "var(--ink)" : "transparent",
+                  color: d === delay ? "var(--paper-raised)" : "var(--ink-2)",
+                }}
+              >
+                {d}d{d === "30" ? " · realistic" : ""}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {DELAYED_MODELS.map((m) => {
+              const score = row.models[m.key];
+              const mean = score["tpr_1pct"].mean;
+              return (
+                <div key={m.key} style={{ display: "grid", gridTemplateColumns: "150px minmax(0, 1fr) 150px", gap: 14, alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 500 }}>{m.label}</div>
+                    <div style={{ fontSize: 10.5, color: "var(--ink-3)", lineHeight: 1.35 }}>{m.note}</div>
+                  </div>
+                  <div style={{ height: 18, background: "var(--paper-sunken)", borderRadius: 7 }}>
+                    <div style={{ width: `${Math.min(100, (mean / 0.7) * 100)}%`, height: "100%", borderRadius: 7, background: m.colour, transition: "width 200ms ease" }} />
+                  </div>
+                  <span className="mono" style={{ fontSize: 13, textAlign: "right" }}>
+                    {(mean * 100).toFixed(1)}%
+                    <span style={{ color: "var(--ink-4)" }}> · {Math.round(score.frauds_caught_1pct.mean).toLocaleString()} caught</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="caps" style={{ marginTop: 10 }}>
+            share of fraud caught at 1% false alarms · {row.n_fraud.toLocaleString()} frauds in the test split · {row.models.graph.n_seeds} seeds
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 36px", marginTop: 20, paddingTop: 14, borderTop: "1px solid var(--rule)" }}>
+            {comparisons.map(([label, diff]) => (
+              <div key={label}>
+                <div className="caps" style={{ marginBottom: 2 }}>{label}</div>
+                <div className="mono" style={{ fontSize: 15, fontWeight: 600 }}>{diffText(diff)}</div>
+                <div style={{ fontSize: 11, color: diff?.excludes_zero ? "var(--ink-2)" : "var(--ink-3)" }}>
+                  {diff?.excludes_zero ? "interval excludes zero" : "within noise"}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Reveal>
+
+      <Reveal>
+        <p style={{ margin: "22px 0 12px", maxWidth: 640, fontSize: 14, color: "var(--ink-2)", lineHeight: 1.68 }}>
+          Retrospective (offline) setting, {data.offline.delay_days}-day delay: whole-dataset client aggregates are allowed, test
+          labels never are. Each row adds one thing to the one above.
+        </p>
+        <div className="card" style={{ overflow: "hidden" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
+            <thead>
+              <tr style={{ textAlign: "left" }}>
+                {["Level", "TPR @ 1% FPR", "TPR @ 0.1% FPR", "Precision"].map((h) => (
+                  <th key={h} className="caps" style={{ padding: "12px 18px", borderBottom: "1px solid var(--rule)", fontWeight: 500 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(data.offline.levels).map(([level, v]) => (
+                <tr key={level}>
+                  <td style={{ padding: "12px 18px", borderTop: "1px solid var(--rule)", fontWeight: 500 }}>{OFFLINE_LEVELS[level] ?? level}</td>
+                  <td className="mono" style={{ padding: "12px 18px", borderTop: "1px solid var(--rule)" }}>{(v["tpr_1pct"].mean * 100).toFixed(1)}%</td>
+                  <td className="mono" style={{ padding: "12px 18px", borderTop: "1px solid var(--rule)" }}>{(v["tpr_0.1pct"].mean * 100).toFixed(1)}%</td>
+                  <td className="mono" style={{ padding: "12px 18px", borderTop: "1px solid var(--rule)" }}>{(v.precision_1pct.mean * 100).toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p style={{ margin: "16px 0 0", maxWidth: 640, fontSize: 13, color: "var(--ink-3)", lineHeight: 1.65 }}>
+          Most of the lift over M1 is the client's own confirmed-fraud history, which the control already has. The graph adds a
+          smaller gain on top, significant at short delays and not at 60 and 90 days. Roughly four in five frauds are a client's
+          first, with no link to any known fraud, so no key-sharing feature can close that gap.
+        </p>
+      </Reveal>
+    </section>
   );
 }
 
@@ -222,11 +362,13 @@ export function Results() {
           </section>
         )}
 
+        {models.data?.delayed && <Delayed data={models.data.delayed} />}
+
         {/* ------------------------------------------------------- axes */}
         {axes.data && (
           <section style={{ paddingBottom: 20 }}>
             <Head
-              index="03"
+              index="04"
               title={<>Ring <em>ranking</em>.</>}
               blurb={`Fraud clients found in the top ${axes.data.k} rings, relative to the number expected from ring size alone (1.00×). Burst share ranks best.`}
             />
@@ -285,14 +427,14 @@ export function Results() {
         {/* -------------------------------------------- operating point */}
         {sweep.isError && (
           <section style={{ padding: "76px 0 0" }}>
-            <Head index="04" title={<>Pick an <em>operating point</em>.</>} blurb="No prediction table for this model — the threshold sweep is unavailable." />
+            <Head index="05" title={<>Pick an <em>operating point</em>.</>} blurb="No prediction table for this model — the threshold sweep is unavailable." />
           </section>
         )}
 
         {operating && sweep.data && (
           <section style={{ padding: "76px 0 0" }}>
             <Head
-              index="04"
+              index="05"
               title={<>Pick an <em>operating point</em>.</>}
               blurb="Drag the threshold. Everything below recolours with it: the filled region is the part of the curve you are buying, and the pale region is what you are giving up."
             />

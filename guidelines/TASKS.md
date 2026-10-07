@@ -20,7 +20,7 @@ Legend: [x] done, [ ] todo, [~] running. Do in order unless stated.
 - [x] Offline ladder L0..L4 -> `reports/offline_ladder.json` (L0 0.426 -> L3 0.556 at 1%FPR; mean-smoothing hurt)
 - [x] Offline max-smoothing check (validation-chosen): uid/max/alpha 0.75 chosen; L4-L3 -0.0006 at 1% (n.s.), so smoothing adds nothing -> `reports/offline_smoothing.json`
 - [x] `scripts/98_summary.py` prints the one table and writes `reports/headline.json` (rerun 22:12 after all jobs finished)
-- [ ] State attribution honestly: own history (control) vs cross-client graph vs offline aggregates vs smoothing
+- [x] State attribution honestly: README "Honest attribution" + Results page note (own history vs cross-client graph vs offline aggregates vs smoothing)
 
 ## Phase 3 — Push the difference further (judge on validation only, never tune on test)
 - [ ] If graph-vs-control is still small: retune the graph per delay (7/14), more matured/recent-window features
@@ -29,9 +29,9 @@ Legend: [x] done, [ ] todo, [~] running. Do in order unless stated.
 - [ ] Optional: SHAP on flagged payments for the demo
 
 ## Phase 4 — Show it
-- [ ] Write `reports/headline.json` (small, committed) for the API/web: M1 / control / graph per delay + offline ladder
-- [ ] API `/metrics/models` serves M1, control, graph, ladder; Results page: three-bar headline, delay selector, "what is control / graph" explainer
-- [ ] README: update Status, Findings, Reproducing (scripts 83-87, 93, 94, 96) and the two settings
+- [x] `reports/headline.json` written by 98_summary.py (committed)
+- [x] API `/metrics/models` now also returns `delayed` (headline.json); Results page section 03: delay selector, M1/control/graph bars, offline ladder, attribution note
+- [x] README: results appended under Findings, reproducing commands added (nothing removed)
 - [ ] Commit only small artefacts; `data/` stays ignored
 
 ## How to proceed after the runs finish (checklist for the next session)

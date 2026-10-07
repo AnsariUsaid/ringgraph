@@ -94,9 +94,50 @@ export interface StratumResult {
   per_seed_diffs: number[];
 }
 
+export interface MeanSd {
+  mean: number;
+  sd: number;
+}
+
+export interface DelayedScores {
+  "tpr_1pct": MeanSd;
+  "tpr_0.1pct": MeanSd;
+  n_seeds?: number;
+  precision_1pct: MeanSd;
+  frauds_caught_1pct: MeanSd;
+  alerts_1pct: MeanSd;
+}
+
+export interface Difference {
+  observed_difference: number;
+  ci_low: number;
+  ci_high: number;
+  excludes_zero: boolean;
+}
+
+/** reports/headline.json, written by scripts/98_summary.py. */
+export interface DelayedHeadline {
+  causal: Record<
+    string,
+    {
+      n_test: number;
+      n_fraud: number;
+      models: Record<string, DelayedScores>;
+      comparisons: Record<string, Difference>;
+      validation_tpr_1pct: Record<string, number>;
+    }
+  >;
+  offline: {
+    delay_days: number;
+    levels: Record<string, DelayedScores & { pr_auc: MeanSd }>;
+    comparisons: Record<string, Difference>;
+  };
+}
+
 export interface ModelMetrics {
   structural: Record<string, StratumResult>;
   community: Record<string, StratumResult> | null;
+  delayed?: DelayedHeadline | null;
   seed_note: string;
 }
 

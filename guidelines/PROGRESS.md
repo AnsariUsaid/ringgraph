@@ -90,3 +90,7 @@ cd C:\Users\lohit\Desktop\RingGraph ; $env:PYTHONPATH="src"; $env:OMP_NUM_THREAD
 Phase 2 done. Final numbers in LOG.md (22:12 table) and `reports/headline.json`. Headline: causal 30d M1 0.426 -> control 0.538 -> graph 0.560 at 1%FPR (graph-M1 +0.120*, graph-control +0.027*); 14d 0.603; 7d 0.636; gain fades at 60d/90d. Offline L0 0.426 -> L3 0.556; smoothing (mean or max) adds nothing. At 0.1%FPR graph-vs-control is n.s. at 30d: do not claim a graph gain there.
 Uncommitted: new `reports/graph_sweep_tuned_d{7,30,60,90}.json`, `offline_smoothing.json`, updated `headline.json`, guidelines edits. Skip regenerated edge_signal/profile/synchrony/runs index and scratch files.
 **Next step:** commit the above (only when the user says so), then Phase 4 (API `/metrics/models`, Results page, README). Optional: ring fraud-rate vs base rate check, per-delay retune, GNN. Do NOT push unless the user says so that turn.
+
+## 2026-10-07 — Phase 4 done
+Results + README + logs committed and pushed (b68c049). API `/metrics/models` returns `delayed` (headline.json); Results page has a new section 03 (delay selector, M1/control/graph bars with CI, offline ladder, attribution note). Typecheck, lint and vite build pass; endpoint checked by calling the function (TestClient needs httpx2, not installed). The page has not been looked at in a browser.
+**Next step:** look at the page (`uvicorn api.main:app --port 8000` + `npm run dev --prefix web`), optionally ring fraud-rate check, per-delay retune, GNN.

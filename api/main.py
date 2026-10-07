@@ -54,7 +54,7 @@ def catalogue() -> dict[str, pd.DataFrame]:
 @lru_cache(maxsize=1)
 def model_reports() -> dict[str, Any]:
     out: dict[str, Any] = {}
-    for name in ("multiseed_m1_vs_m2", "multiseed_m1_vs_m2_community", "m1_tuned_metrics"):
+    for name in ("multiseed_m1_vs_m2", "multiseed_m1_vs_m2_community", "m1_tuned_metrics", "headline"):
         path = paths.report_path(f"{name}.json")
         if path.exists():
             out[name] = json.loads(path.read_text())
@@ -304,6 +304,9 @@ def metrics_models() -> dict[str, Any]:
     return {
         "structural": reports["multiseed_m1_vs_m2"]["summary"],
         "community": reports.get("multiseed_m1_vs_m2_community", {}).get("summary"),
+        # Delayed-label results (scripts/98_summary.py): M1 / control / graph per
+        # delay plus the offline ladder. None until that report has been built.
+        "delayed": reports.get("headline"),
         "seed_note": (
             "Differences are reported against a measured training-noise floor. "
             "A single training run varies by 0.033 in TPR@1%FPR on this data, "

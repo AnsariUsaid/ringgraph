@@ -61,3 +61,10 @@
 - Correction: relative lifts are graph/M1-1 (14d +42%, 30d +31%); the chat figures +39% / +28% were miscomputed.
 - Graph beats control significantly at 7d/14d/30d (+0.016..+0.027), not at 60d/90d. Gain over M1 grows monotonically as the delay shrinks.
 - Kaggle test_transaction/test_identity (unlabeled, later period) deliberately not downloaded: useless for causal setting and evaluation, at most a small offline L1 gain.
+
+## 2026-10-07 ring fraud-rate check (scripts/99_ring_fraud_rate.py, no training; rings are label-free structure over the whole period)
+- 550 rings, 4,762 clients (2.2% of clients), 30,785 txns (5.2% of all). Client fraud rate in rings 19.3% (917/4,762) vs ~3.7% base = ~5x. Transaction fraud rate in rings 9.1% vs 3.5% base = 2.6x. Rings hold 2,804 frauds, ~14% of all fraud txns.
+- 192 rings have >=1 fraud client, 112 have >=2, 12 are all fraud, 358 have none. 837 of the 917 ring fraud clients sit in the 112 multi-fraud rings: the signal is concentrated.
+- Ranking by structure only (composite, labels excluded): top 25 rings 32.5% fraud clients, top 50 24.5%, top 100 17.7%. Only the very top beats the all-ring average (19.3%), consistent with the size-controlled axes result.
+- Rings are retrospective (built over the full period, not a causal detector). Fraud rate in ring transactions in the test period (day>=151): 8.9%.
+- Safe wording: "the graph groups clients into candidate rings; clients in them are about 5x more likely to be fraudulent than the base rate". Not "we detect rings" as an evaluated detector, and 358 of 550 rings have no fraud.

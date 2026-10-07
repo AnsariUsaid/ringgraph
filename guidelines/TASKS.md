@@ -3,23 +3,23 @@
 Legend: [x] done, [ ] todo, [~] in progress. Do in order unless stated.
 
 ## Phase 0 — Environment and data
-- [ ] Confirm `~/.kaggle/kaggle.json` exists; install `kaggle` in `.venv`
-- [ ] Fix `scripts/00_download.py` for Windows (`kaggle.exe` next to interpreter)
-- [ ] Download `train_transaction.csv`, `train_identity.csv` into `data/raw`
-- [ ] Check GPU (`nvidia-smi`); decide GPU trainer (XGBoost `device="cuda"` or LightGBM GPU build) — inside `.venv` only
-- [ ] Run pipeline 10 -> 20 -> 30 -> 35 -> 40 -> 45 -> 48 -> 50 -> 80 (see README)
-- [ ] Reproduce M1 (`configs/tuned/m1.toml`, `scripts/70_train_m1.py`); compare to `reports/m1_tuned_metrics.json` (test TPR@1% ~0.442)
+- [x] Confirm `~/.kaggle/kaggle.json` exists; install `kaggle` in `.venv`
+- [x] Fix `scripts/00_download.py` for Windows (`kaggle.exe` next to interpreter)
+- [x] Download `train_transaction.csv`, `train_identity.csv` into `data/raw`
+- [~] Check GPU (RTX 3060 6GB, CUDA 13 driver OK; trainer choice pending, nothing installed yet); decide GPU trainer (XGBoost `device="cuda"` or LightGBM GPU build) — inside `.venv` only
+- [x] Run pipeline 10 -> 20 -> 30 -> 35 -> 40 -> 45 -> 48 -> 50 -> 80 (see README)
+- [x] Reproduce M1 (smoke/sweep M1 ~0.42-0.45 across seeds; committed 0.442) (`configs/tuned/m1.toml`, `scripts/70_train_m1.py`); compare to `reports/m1_tuned_metrics.json` (test TPR@1% ~0.442)
 
 ## Phase 1 — Dynamic label knowledge (the main bet)
-- [ ] `src/fds/label_features.py`: for each transaction at time t and delay D, from clients linked at that time, count/share of neighbours with a fraud label confirmed <= t - D; also ring-level (community) confirmed-fraud count
-- [ ] `tests/test_label_leakage.py`: fails if any feature uses a label newer than t - D (mandatory)
-- [ ] `scripts/83_label_features.py`: build table for D in {30, 60, 90}
-- [ ] Control: same features from card1/addr1/email keys only (tabular target-encoding with delay)
-- [ ] Train M3 = M1 + structural + label features (GPU); 5 seeds; `scripts/` next free number
+- [x] `src/fds/label_features.py`: for each transaction at time t and delay D, from clients linked at that time, count/share of neighbours with a fraud label confirmed <= t - D; also ring-level (community) confirmed-fraud count
+- [x] `tests/test_label_leakage.py`: fails if any feature uses a label newer than t - D (mandatory)
+- [x] `scripts/83_label_features.py`: build table for D in {30, 60, 90}
+- [x] Control: same features from card1/addr1/email keys only (tabular target-encoding with delay)
+- [~] Train M3 = M1 + structural + label features; 5 seeds. Built as `scripts/93_graph_sweep.py` (needs tuned params from `scripts/94_tune_graph.py`, running)
 
 ## Phase 2 — Better graph
 - [ ] Weighted links: rare shared attribute counts more (IDF) instead of hard degree ceiling 10; target coverage well above 2.4% of clients, largest component < 50%
-- [ ] Multi-hop: 2-hop confirmed-fraud exposure
+- [x] Multi-hop: 2-hop propagated suspicion (`rp` family in `src/fds/relational_features.py`)
 - [ ] Re-run Phase 1 on the new graph
 
 ## Phase 3 — Evaluate and prove

@@ -15,3 +15,9 @@
 - 2026-10-07: do not strengthen M1 (user choice). Add a delayed-label control from tabular keys so the gain can be attributed to graph.
 - 2026-10-07: GNN skipped for now.
 - 2026-10-07: commits are one line, conventional format, user identity only.
+
+## 2026-10-07 decisions
+- Own-client delayed history is a tabular key, so it is in the control, not credited to the graph.
+- Graph model = M1 + every relational family; headline fixed in advance, ablations reported alongside. Model choice never made on test.
+- "linked" stratum redefined by cross-client rate > 0.10 (hub keys made the count-based one cover 99.8% of rows).
+- Bootstrap trimmed (300 resamples, ablation pairs on full test only): it cost ~15 min per delay.

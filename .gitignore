@@ -91,3 +91,6 @@ preds/model=m1_tuned/*
 !preds/model=m1_tuned/run=*/
 preds/model=m1_tuned/run=*/*
 !preds/model=m1_tuned/run=*/preds.parquet
+
+# Readout (MD) for the explanation docs
+!docs/*.md

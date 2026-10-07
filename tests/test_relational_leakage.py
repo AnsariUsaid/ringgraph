@@ -93,3 +93,19 @@ def test_matured_rate_matches_brute_force():
         same = df["card1"] == row["card1"]
         n, f = (mature & same).sum(), (mature & same & (df[schema.TARGET] == 1)).sum()
         assert np.isclose(table.loc[i, f"rl{D}_card1_all_mrate"], (f + 0.035 * 20) / (n + 20), atol=1e-5)
+
+
+def test_ring_breadth_and_recency_match_brute_force():
+    df = _frame(seed=5)
+    table = build_relational(df, DELAYS)
+    for i in range(25, len(df), 43):
+        row = df.iloc[i]
+        t = row[schema.TIME_RAW]
+        known = (df[schema.TIME_RAW] + D * SECONDS_PER_DAY <= t) & (df[schema.TARGET] == 1) & (df["card1"] == row["card1"])
+        clients = set(df.loc[known, schema.UID]) - {row[schema.UID]}
+        assert table.loc[i, f"rl{D}_card1_x_nclients"] == len(clients)
+        if known.any():
+            last = (df.loc[known, schema.TIME_RAW] + D * SECONDS_PER_DAY).max()
+            assert np.isclose(table.loc[i, f"rl{D}_card1_all_recency"], np.log1p((t - last) / SECONDS_PER_DAY), atol=1e-3)
+        else:
+            assert np.isnan(table.loc[i, f"rl{D}_card1_all_recency"])

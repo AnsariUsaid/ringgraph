@@ -30,7 +30,7 @@ import pandas as pd
 
 from fds import schema
 
-DELAYS = (30, 60, 90)
+DELAYS = (7, 14, 30, 60, 90)  # 7/14: sensitivity if the bank confirms fraud faster
 CONTROL_KEYS = ("card1", "addr1", "P_emaildomain", "uid")
 GRAPH_KEYS = (
     "DeviceInfo",

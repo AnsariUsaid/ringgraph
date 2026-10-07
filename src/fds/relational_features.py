@@ -160,6 +160,33 @@ def _matured(codes: np.ndarray, t: np.ndarray, fraud: np.ndarray, delay_s: int):
     return tuple(np.where(ok, a, z) for a in (n, f, n - n_old, f - f_old))
 
 
+def _ring(kc: np.ndarray, pair: np.ndarray, t: np.ndarray, fraud: np.ndarray, delay_s: int):
+    """Ring breadth and recency for one key.
+
+    breadth: distinct clients with fraud confirmed by t on this key (own client not
+    counted) -- five clients with one fraud each is a ring, one client with five is not.
+    recency: log1p(days since the latest confirmed fraud on the key); NaN if none.
+    """
+    n = len(t)
+    ok = (kc >= 0) & fraud
+    safe = np.where(kc >= 0, kc, 0)
+    idx = np.flatnonzero(ok)
+    order = np.lexsort((t[idx], pair[idx]))
+    p_s, t_s, k_s = pair[idx][order], t[idx][order], kc[idx][order]
+    first = np.concatenate([[True], p_s[1:] != p_s[:-1]]) if len(idx) else np.zeros(0, dtype=bool)
+    client_ev = np.sort(k_s[first] * _K + t_s[first] + delay_s)
+    all_clients = np.searchsorted(client_ev, safe * _K + t, "right") - np.searchsorted(client_ev, safe * _K, "left")
+    own_confirmed = _prior_and_confirmed(pair, t, fraud, delay_s)[1] > 0
+    breadth = np.where(kc >= 0, all_clients - own_confirmed, 0)
+
+    conf_ev = np.sort(kc[ok] * _K + t[ok] + delay_s)
+    hi = np.searchsorted(conf_ev, safe * _K + t, "right")
+    lo = np.searchsorted(conf_ev, safe * _K, "left")
+    last = conf_ev[np.clip(hi - 1, 0, max(len(conf_ev) - 1, 0))] - safe * _K if len(conf_ev) else np.zeros(n)
+    recency = np.where((kc >= 0) & (hi > lo), np.log1p(np.maximum(t - last, 0) / SECONDS_PER_DAY), np.nan)
+    return breadth, recency
+
+
 def label_exposure(df: pd.DataFrame, codes: dict[str, np.ndarray], delay_days: int):
     """``rl<D>_`` family, plus the per-row stage-1 suspicion used for propagation."""
     t = df[schema.TIME_RAW].to_numpy("int64")
@@ -185,12 +212,14 @@ def label_exposure(df: pd.DataFrame, codes: dict[str, np.ndarray], delay_days: i
         out[f"{base}_x_mrate"] = _rate(f_a - f_p, n_a - n_p)
         out[f"{base}_x_mrate60"] = _rate(fr_a - fr_p, nr_a - nr_p)
         out[f"{base}_x_mn"] = n_a - n_p
+        out[f"{base}_x_nclients"], out[f"{base}_all_recency"] = _ring(kc, pair, t, fraud, delay_s)
         n_conf_keys += cross_conf > 0
     own_prior, own_conf = _prior_and_confirmed(uid, t, fraud, delay_s)
     own_rate = _rate(own_conf, own_prior)
     n_u, f_u, nr_u, fr_u = _matured(uid, t, fraud, delay_s)
     out[f"{LABEL_PREFIX}{delay_days}_uid_mrate"] = _rate(f_u, n_u)
     out[f"{LABEL_PREFIX}{delay_days}_uid_mrate60"] = _rate(fr_u, nr_u)
+    out[f"{LABEL_PREFIX}{delay_days}_uid_recency"] = _ring(uid, uid, t, fraud, delay_s)[1]
     out[f"{LABEL_PREFIX}{delay_days}_uid_conf"] = own_conf
     out[f"{LABEL_PREFIX}{delay_days}_uid_rate"] = own_rate
     out[f"{LABEL_PREFIX}{delay_days}_max_rate_x"] = np.max(rates, axis=0)

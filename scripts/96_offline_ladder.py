@@ -90,7 +90,13 @@ def main() -> None:
     groups["component"] = component_ids(load_base(columns=base_columns_for_components()).merge(read_parquet(paths.uid_map_path(recipe)), on=schema.KEY))
 
     scores: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    m1_cache = paths.DATA_ROOT / "m1_scores.npz"
     for name, features in ladder.items():
+        if name == "L0" and m1_cache.exists():
+            z = np.load(m1_cache)
+            scores[name] = (z["val"], z["test"])
+            print(f"\n== L0 (M1) scores reused from {m1_cache.name}", flush=True)
+            continue
         print(f"\n== training {name} ({len(features):,} features)", flush=True)
         params = None if name == "L0" else graph_params
         runs = train_seed_sweep(

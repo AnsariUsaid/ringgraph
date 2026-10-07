@@ -154,9 +154,13 @@ def train_seed_sweep(
             train_set,
             num_boost_round=num_boost_round,
             valid_sets=[val_set],
-            callbacks=[lgb.early_stopping(early_stopping_rounds, verbose=False)],
+            callbacks=[
+                lgb.early_stopping(early_stopping_rounds, verbose=False),
+                lgb.log_evaluation(period=100),
+            ],
         )
         best = booster.best_iteration
+        print(f"seed {seed}: best iteration {best}", flush=True)
         results.append(
             (
                 seed,

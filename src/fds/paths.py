@@ -97,6 +97,14 @@ def attach_path(recipe: str, min_degree: int, max_degree: int, cadence_days: int
     )
 
 
+def labelfeat_path(recipe: str) -> Path:
+    return DATA_ROOT / "labelfeat" / f"recipe={recipe}" / "labelfeat.parquet"
+
+
+def relfeat_path(recipe: str) -> Path:
+    return DATA_ROOT / "relfeat" / f"recipe={recipe}" / "relfeat.parquet"
+
+
 def preds_path(model: str, run_key: str) -> Path:
     return PREDS_DIR / f"model={model}" / f"run={run_key}" / "preds.parquet"
 

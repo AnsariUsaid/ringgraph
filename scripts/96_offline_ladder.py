@@ -44,7 +44,6 @@ def main() -> None:
     parser = base_parser(__doc__.splitlines()[0])
     parser.add_argument("--seeds", type=int, nargs="*", default=SEEDS)
     parser.add_argument("--delay", type=int, default=30)
-    parser.add_argument("--config", default=str(paths.CONFIGS_DIR / "tuned" / "m1.toml"))
     parser.add_argument("--graph-config", default=str(paths.CONFIGS_DIR / "tuned" / "graph_d30.toml"))
     parser.add_argument("--out", default="offline_ladder")
     args = parser.parse_args()

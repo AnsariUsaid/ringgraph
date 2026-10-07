@@ -227,7 +227,7 @@ export function Landing() {
           >
             {[
               { label: "candidate rings", value: rings.data?.total ?? 0, decimals: 0 },
-              { label: "linked clients", value: summary.data?.rings.n_ring_clients ?? 0, decimals: 0 },
+              { label: "clients in rings", value: summary.data?.rings.n_ring_clients ?? 0, decimals: 0 },
               { label: "best axis lift", value: best ?? 0, decimals: 2, suffix: "×" },
               { label: "test ROC-AUC", value: summary.data?.m1.roc_auc ?? 0, decimals: 3 },
             ].map((stat) => (
@@ -289,7 +289,7 @@ export function Landing() {
                 The four scores become a <em>shape</em>.
               </>
             }
-            blurb="The same glyph is drawn everywhere a ring appears, always in the same axis order. Because the order never changes it reads as a silhouette rather than a chart — at 44 pixels, in a scrolling list, without a legend."
+            blurb="The same glyph is drawn everywhere a ring appears, always in the same axis order. Because the order never changes it reads as a silhouette rather than a chart — at 44 pixels, in a scrolling list, without a legend. The three below are illustrative archetypes, not specific rings."
           />
 
           <Reveal>
@@ -326,14 +326,14 @@ export function Landing() {
                 n: "I",
                 title: "Burst share is the strongest ring ranking.",
                 body: "Ranking rings by the share of their transactions falling in a single burst finds fraud clients at " +
-                  (best ? best.toFixed(2) : "1.72") +
+                  (best ? best.toFixed(2) : "1.69") +
                   "× the rate expected from ring size alone. The four-axis composite manages " +
                   (composite ? composite.toFixed(2) : "1.27") +
                   "×, which is why the tool opens on burst share.",
                 figure: (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
                     {[
-                      ["burst share", best ?? 1.72, "var(--risk-3)"],
+                      ["burst share", best ?? 1.69, "var(--risk-3)"],
                       ["composite", composite ?? 1.27, "var(--risk-1)"],
                       ["size only", 1, "var(--risk-0)"],
                     ].map(([label, value, colour]) => (
@@ -363,7 +363,7 @@ export function Landing() {
               {
                 n: "II",
                 title: "Structure is legible before it is predictive.",
-                body: "The top rings are not statistical artefacts — they are five accounts on one device fingerprint, transacting inside the same hour for identical amounts. The event raster shows that as a vertical wall, and it is visible before any model is trained on it.",
+                body: "The top rings are not statistical artefacts. The first is five accounts on one device fingerprint, transacting inside two minutes for $25 each, all five confirmed fraud. The event raster shows that as a vertical wall, and it is visible before any model is trained on it.",
                 figure: (
                   <svg width="100%" height="106" viewBox="0 0 220 106" aria-hidden>
                     {Array.from({ length: 6 }).map((_, lane) => (

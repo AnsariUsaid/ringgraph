@@ -21,6 +21,7 @@ import numpy as np
 
 from fds import paths, schema
 from fds.artifacts import read_parquet
+from fds.config import load_config
 from fds.cli import base_parser, record_run, resolve
 from fds.evaluation import evaluate, paired_bootstrap_difference
 from fds.features import categorical_columns, split_frames, tabular_feature_columns
@@ -44,6 +45,8 @@ def main() -> None:
     parser.add_argument("--seeds", type=int, nargs="*", default=SEEDS)
     parser.add_argument("--delays", type=int, nargs="*", default=list(DELAYS))
     parser.add_argument("--out", default="graph_sweep")
+    parser.add_argument("--ctrl-config", default=None, help="tuned parameters for the control (default: M1's)")
+    parser.add_argument("--graph-config", default=None, help="tuned parameters for the graph family (default: M1's)")
     args = parser.parse_args()
     cfg = resolve(args)
     recipe = cfg.uid.recipe_name
@@ -67,7 +70,7 @@ def main() -> None:
             split_frames(df, features),
             features=features,
             categorical=categorical_columns(df, features),
-            params=cfg.model.params,
+            params=params or cfg.model.params,
             num_boost_round=cfg.model.num_boost_round,
             early_stopping_rounds=cfg.model.early_stopping_rounds,
             seeds=args.seeds,
@@ -81,7 +84,7 @@ def main() -> None:
         return np.stack([r[1] for r in runs]), np.stack([r[2] for r in runs])
 
     models_static = {"m1": train(m1_features, "M1")}
-    models_static["rs"] = train(m1_features + cols(df, STRUCT_PREFIX), "rs: neighbourhood behaviour (label-free)")
+    models_static["rs"] = train(m1_features + cols(df, STRUCT_PREFIX), "rs: neighbourhood behaviour (label-free)", graph_params)
     rng = np.random.default_rng(cfg.seed)
     report: dict = {"seeds": args.seeds, "delays": {}}
     saved: dict[str, np.ndarray] = {"y_test": y, "y_val": y_val}
@@ -94,11 +97,11 @@ def main() -> None:
         rs_cols = cols(df, STRUCT_PREFIX)
 
         models = dict(models_static)
-        models["ctrl"] = train(m1_features + ctrl_cols, f"ctrl: tabular-key history, delay {d}d")
-        models["rl"] = train(m1_features + rl_cols, f"rl: multi-key delayed exposure, delay {d}d")
-        models["rp"] = train(m1_features + rl_cols + rp_cols, f"rp: rl + 2-hop propagation, delay {d}d")
+        models["ctrl"] = train(m1_features + ctrl_cols, f"ctrl: tabular-key history, delay {d}d", ctrl_params)
+        models["rl"] = train(m1_features + rl_cols, f"rl: multi-key delayed exposure, delay {d}d", graph_params)
+        models["rp"] = train(m1_features + rl_cols + rp_cols, f"rp: rl + 2-hop propagation, delay {d}d", graph_params)
         models["graph"] = train(
-            m1_features + ctrl_cols + v1_cols + rl_cols + rp_cols + rs_cols, f"GRAPH: everything, delay {d}d"
+            m1_features + ctrl_cols + v1_cols + rl_cols + rp_cols + rs_cols, f"GRAPH: everything, delay {d}d", graph_params
         )
         for name, (v, s) in models.items():
             saved[f"d{d}_{name}_val"], saved[f"d{d}_{name}_test"] = v, s

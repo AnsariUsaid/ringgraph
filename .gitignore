@@ -3,6 +3,7 @@
 # reports stay local.
 *.md
 !README.md
+!guidelines/*.md
 
 # ── Python ────────────────────────────────────────────────────────────────
 .venv/

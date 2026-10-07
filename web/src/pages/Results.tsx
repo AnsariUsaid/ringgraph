@@ -4,9 +4,12 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  Cell,
   ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -16,6 +19,8 @@ import type { DelayedHeadline, Difference } from "../api/types";
 import { StatePanel } from "../components/StatePanel";
 import { Reveal } from "../components/Reveal";
 import { CountUp } from "../components/CountUp";
+import { useRouter } from "../router";
+import { useSelection } from "../store/selection";
 
 const STRATUM_LABELS: Record<string, string> = {
   full_test: "All test transactions",
@@ -105,7 +110,7 @@ function Delayed({ data }: { data: DelayedHeadline }) {
       <Head
         index="03"
         title={<>With delayed <em>fraud labels</em>.</>}
-        blurb="A fraud label may be used for a transaction only once it was confirmed, one chargeback delay earlier. The control gets the client's own history; the graph model adds links between clients. Mean over seeds on the test split; the interval is a paired bootstrap on the difference."
+        blurb="The table above is a null for features that describe only the graph's shape. This section adds knowledge the bank really had. A fraud label may be used for a transaction only once it was confirmed, one chargeback delay earlier. The control gets the client's own history; the graph model adds links between clients. Mean over seeds on the test split; the interval is a paired bootstrap on the difference. M1 reads 42.6% here, the mean over five seeds, against 44.2% for the single committed run above."
       />
       <Reveal>
         <div className="card" style={{ padding: "22px 26px 26px" }}>
@@ -207,11 +212,227 @@ function Delayed({ data }: { data: DelayedHeadline }) {
   );
 }
 
+const ABLATION: [string, string][] = [
+  ["m1", "normal (M1)"],
+  ["rs", "+ neighbourhood behaviour (no labels)"],
+  ["cp", "+ client profile"],
+  ["rp", "+ delayed exposure and two-hop"],
+  ["rl", "+ delayed exposure, many keys"],
+  ["ctrl", "control: own history, tabular keys"],
+  ["graph", "graph: everything"],
+];
+
+/** What each feature name means. The shape of the name is
+ *  `<family><delay>_<key>_<stat>`; the delay digits are dropped before lookup. */
+const FEATURE_LABELS: Record<string, string> = {
+  rl_uid_mrate: "client's fraud rate over payments old enough to be confirmed",
+  rl_uid_mrate60: "same, recent window only",
+  rl_uid_rate: "client's confirmed-fraud rate",
+  rl_uid_recency: "days since the client's last confirmed fraud",
+  lfc_uid_rate: "client's confirmed-fraud rate so far",
+};
+
+function featureLabel(feature: string) {
+  return FEATURE_LABELS[feature.replace(/^([a-z]+)\d+_/, "$1_")] ?? feature;
+}
+
+function HBar({ label, value, max, colour, text }: { label: string; value: number; max: number; colour: string; text: string }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(120px, 210px) minmax(0, 1fr) 96px", gap: 14, alignItems: "center" }}>
+      <span style={{ fontSize: 12.5, color: "var(--ink-2)", lineHeight: 1.35 }}>{label}</span>
+      <div style={{ height: 14, background: "var(--paper-sunken)", borderRadius: 6 }}>
+        <div style={{ width: `${Math.max(0, Math.min(100, (value / max) * 100))}%`, height: "100%", borderRadius: 6, background: colour, transition: "width 200ms ease" }} />
+      </div>
+      <span className="mono" style={{ fontSize: 12.5, textAlign: "right" }}>{text}</span>
+    </div>
+  );
+}
+
+/** Where the lift comes from: one feature family at a time (30-day delay), then
+ *  SHAP on the frauds only the graph model catches. Both say the same thing,
+ *  and it is what keeps the headline honest: the lift is the client's own record. */
+function Attribution({ data }: { data: DelayedHeadline }) {
+  const shap = useQuery({ queryKey: queryKeys.shap(), queryFn: api.shap });
+  const models = data.causal["30"]?.models;
+  if (!models) return null;
+  const m1 = models.m1["tpr_1pct"].mean;
+  const families = shap.data ? Object.entries(shap.data.family_share_caught_only_by_graph).sort((a, b) => b[1] - a[1]) : [];
+
+  return (
+    <section style={{ padding: "76px 0 0" }}>
+      <Head
+        index="04"
+        title={<>Where the lift <em>comes from</em>.</>}
+        blurb="Two views of the same question. First, M1 plus one feature family at a time (30-day delay, test split). Second, the features that explain the frauds only the graph model catches. Both point at the client's own confirmed-fraud record, not at links between clients."
+      />
+      <Reveal>
+        <div className="card" style={{ padding: "22px 26px 26px" }}>
+          <div className="caps" style={{ marginBottom: 14 }}>TPR at 1% FPR, one family added to M1</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+            {ABLATION.filter(([key]) => models[key]).map(([key, label]) => {
+              const v = models[key]["tpr_1pct"].mean;
+              const strong = key === "graph" || key === "ctrl";
+              return (
+                <HBar
+                  key={key}
+                  label={label}
+                  value={v}
+                  max={0.7}
+                  colour={key === "m1" ? "var(--ink-4)" : strong ? "var(--risk-4)" : "var(--risk-1)"}
+                  text={key === "m1" ? `${(v * 100).toFixed(1)}%` : `${(v * 100).toFixed(1)}%  ${v >= m1 ? "+" : ""}${((v - m1) * 100).toFixed(1)}`}
+                />
+              );
+            })}
+          </div>
+        </div>
+      </Reveal>
+
+      {shap.data && (
+        <Reveal>
+          <div className="card" style={{ padding: "22px 26px 26px", marginTop: 18 }}>
+            <div className="caps" style={{ marginBottom: 4 }}>
+              why the graph model flags {shap.data.caught_only_by_graph} frauds that M1 misses
+            </div>
+            <p style={{ margin: "0 0 16px", maxWidth: 640, fontSize: 13, color: "var(--ink-3)", lineHeight: 1.6 }}>
+              Share of mean |SHAP| by feature family, at the 1% false-alarm threshold. One model, one seed, nothing tuned for this
+              chart.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+              {families.map(([name, share], i) => (
+                <HBar key={name} label={name} value={share} max={Math.max(0.4, families[0]?.[1] ?? 0.4)} colour={i === 0 ? "var(--risk-4)" : "var(--risk-1)"} text={`${(share * 100).toFixed(1)}%`} />
+              ))}
+            </div>
+
+            <div className="caps" style={{ margin: "26px 0 12px" }}>three of those payments, and their top reasons</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+              {shap.data.examples.slice(0, 3).map((example, i) => (
+                <div key={example.test_row} style={{ border: "1px solid var(--rule)", borderRadius: 12, padding: "14px 16px", background: "var(--paper-raised)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>Payment {String.fromCharCode(65 + i)}</span>
+                    <span className="mono" style={{ fontSize: 11.5, color: "var(--ink-3)" }}>
+                      graph {example.score.toFixed(2)} · M1 {example.m1_score.toFixed(2)}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {example.top_features.slice(0, 4).map((f) => (
+                      <div key={f.feature} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 46px", gap: 8, alignItems: "baseline" }}>
+                        <span style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.35 }}>{featureLabel(f.feature)}</span>
+                        <span className="mono" style={{ fontSize: 12, textAlign: "right", color: f.shap >= 0 ? "var(--risk-4)" : "var(--ink-3)" }}>
+                          {f.shap >= 0 ? "+" : ""}{f.shap.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p style={{ margin: "16px 0 0", maxWidth: 640, fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.65 }}>
+              Positive numbers push the score toward fraud. The reasons are the client's own record, so most of the lift is client
+              history rather than ring structure.
+            </p>
+          </div>
+        </Reveal>
+      )}
+    </section>
+  );
+}
+
+/** Rings against the base rate, and every ring on one chart. Fraud share is the
+ *  answer key: the rings themselves were built without labels. */
+function RingEvidence() {
+  const summary = useQuery({ queryKey: queryKeys.summary(), queryFn: api.summary });
+  const all = useQuery({ queryKey: ["rings", "scatter"], queryFn: () => api.rings("composite", 550) });
+  const setRing = useSelection((s) => s.setRing);
+  const { navigate } = useRouter();
+  const r = summary.data?.rings;
+  if (!r) return null;
+  const points = (all.data?.rings ?? []).map((ring) => ({
+    id: ring.ring_id,
+    size: ring.n_clients,
+    share: ring.fraud_share,
+    fraud: ring.n_fraud_clients,
+  }));
+  const tiles: [string, string, string][] = [
+    ["clients in rings that are fraud", `${(r.ring_client_fraud_rate * 100).toFixed(1)}%`, `vs ${(r.base_client_fraud_rate * 100).toFixed(1)}% overall · ${(r.ring_client_fraud_rate / r.base_client_fraud_rate).toFixed(1)}×`],
+    ["transactions in rings that are fraud", `${(r.ring_txn_fraud_rate * 100).toFixed(1)}%`, `vs ${(r.base_txn_fraud_rate * 100).toFixed(1)}% overall · ${(r.ring_txn_fraud_rate / r.base_txn_fraud_rate).toFixed(1)}×`],
+    ["rings holding 2+ fraud clients", String(r.rings_multi_fraud), `of ${r.n_rings} · ${r.fraud_clients_in_multi_fraud_rings} of ${r.n_ring_fraud_clients} fraud clients`],
+    ["rings with no fraud at all", String(r.rings_no_fraud), `${r.rings_all_fraud} are entirely fraud`],
+  ];
+
+  return (
+    <Reveal style={{ marginTop: 40 }}>
+      <div className="grid-stats" style={{ background: "var(--rule)", border: "1px solid var(--rule)", borderRadius: "var(--radius-panel)", overflow: "hidden" }}>
+        {tiles.map(([label, value, note]) => (
+          <div key={label} style={{ background: "var(--paper-raised)", padding: "16px 16px" }}>
+            <div style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-0.03em" }}>{value}</div>
+            <div className="caps" style={{ marginTop: 3 }}>{label}</div>
+            <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4, lineHeight: 1.4 }}>{note}</div>
+          </div>
+        ))}
+      </div>
+      {points.length > 0 && (
+        <div className="card" style={{ padding: "22px 26px 18px", marginTop: 18 }}>
+          <div className="caps" style={{ marginBottom: 4 }}>every ring · size against share of clients confirmed fraud</div>
+          <p style={{ margin: "0 0 10px", maxWidth: 640, fontSize: 13, color: "var(--ink-3)", lineHeight: 1.6 }}>
+            Click a ring to open it. Fraud concentrates in a minority of rings, and the large ones carry most of it. The outliers are
+            the fully fraudulent small rings along the top edge.
+          </p>
+          <div style={{ height: 300 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 8, right: 12, bottom: 4, left: -14 }}>
+                <CartesianGrid stroke="var(--rule)" strokeDasharray="2 4" />
+                <XAxis dataKey="size" type="number" scale="log" domain={[3, 200]} ticks={[3, 5, 10, 20, 50, 100, 200]} name="clients" tick={{ fontSize: 10, fill: "var(--ink-3)" }} stroke="var(--rule-strong)" />
+                <YAxis dataKey="share" type="number" domain={[0, 1]} name="fraud share" tick={{ fontSize: 10, fill: "var(--ink-3)" }} tickFormatter={(v: number) => `${Math.round(v * 100)}%`} stroke="var(--rule-strong)" />
+                <Tooltip
+                  cursor={{ strokeDasharray: "3 3" }}
+                  contentStyle={{ background: "var(--paper-raised)", border: "1px solid var(--rule-strong)", borderRadius: 10, fontSize: 12 }}
+                  content={({ payload }) => {
+                    const p = payload?.[0]?.payload as (typeof points)[number] | undefined;
+                    if (!p) return null;
+                    return (
+                      <div style={{ background: "var(--paper-raised)", border: "1px solid var(--rule-strong)", borderRadius: 10, padding: "8px 11px", fontSize: 12 }}>
+                        <div className="mono" style={{ fontWeight: 600 }}>RING-{String(p.id).padStart(4, "0")}</div>
+                        {p.fraud} of {p.size} clients confirmed fraud
+                      </div>
+                    );
+                  }}
+                />
+                <Scatter
+                  data={points}
+                  isAnimationActive={false}
+                  onClick={(d: { id?: number; payload?: { id: number } }) => {
+                    const id = d.payload?.id ?? d.id;
+                    if (id !== undefined) {
+                      setRing(id);
+                      navigate("/explore");
+                    }
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
+                  {points.map((p) => (
+                    <Cell key={p.id} fill={p.fraud >= 2 ? "var(--risk-4)" : p.fraud === 1 ? "var(--risk-2)" : "var(--ink-4)"} fillOpacity={p.fraud === 0 ? 0.35 : 0.85} />
+                  ))}
+                </Scatter>
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="caps" style={{ display: "flex", gap: 18, marginTop: 6 }}>
+            <span><span style={{ color: "var(--risk-4)" }}>●</span> 2+ fraud clients</span>
+            <span><span style={{ color: "var(--risk-2)" }}>●</span> one fraud client</span>
+            <span><span style={{ color: "var(--ink-4)" }}>●</span> none</span>
+          </div>
+        </div>
+      )}
+    </Reveal>
+  );
+}
+
 export function Results() {
   const [threshold, setThreshold] = useState(0.25);
   const models = useQuery({ queryKey: queryKeys.models(), queryFn: api.models });
   const axes = useQuery({ queryKey: queryKeys.axes(), queryFn: api.axes });
   const sweep = useQuery({ queryKey: queryKeys.sweep("m1_tuned"), queryFn: () => api.sweep("m1_tuned") });
+  const summary = useQuery({ queryKey: queryKeys.summary(), queryFn: api.summary });
 
   // The whole sweep arrives in one response, so dragging the slider is an
   // array lookup rather than a request per frame.
@@ -280,10 +501,10 @@ export function Results() {
             }}
           >
             {[
-              { label: "test ROC-AUC", value: 0.894, decimals: 3 },
-              { label: "test PR-AUC", value: 0.528, decimals: 3 },
-              { label: "TPR @ 1% FPR", value: 44.2, decimals: 1, suffix: "%" },
-              { label: "features", value: 431, decimals: 0 },
+              { label: "test ROC-AUC", value: summary.data?.m1.roc_auc ?? 0, decimals: 3 },
+              { label: "test PR-AUC", value: summary.data?.m1.pr_auc ?? 0, decimals: 3 },
+              { label: "M1 TPR @ 1% FPR", value: (summary.data?.m1.tpr_1pct ?? 0) * 100, decimals: 1, suffix: "%" },
+              { label: "M1 features", value: summary.data?.m1.n_features ?? 0, decimals: 0 },
             ].map((stat) => (
               <div key={stat.label} style={{ background: "var(--paper-raised)", padding: "18px 16px" }}>
                 <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: "-0.03em" }}>
@@ -307,6 +528,8 @@ export function Results() {
               <li><span style={{ color: "var(--ink)", fontWeight: 500 }}>M2 — M1 plus graph features.</span> Point-in-time graph snapshot features (degree, triangles, clustering, PageRank, component size), in two window configurations.</li>
               <li><span style={{ color: "var(--ink)", fontWeight: 500 }}>M2 plus community features.</span> Community-level aggregates added on top of the snapshot features.</li>
               <li><span style={{ color: "var(--ink)", fontWeight: 500 }}>Ring scoring.</span> Every candidate ring scored on density, synchrony, concentration, tightness and burst share, then ranked.</li>
+              <li><span style={{ color: "var(--ink)", fontWeight: 500 }}>Delayed fraud labels.</span> Fraud confirmed one chargeback delay earlier, fed back as features: first from the client's own history only (the control), then with links between clients (the graph model). Tuned on validation, reported at 7 to 90 days.</li>
+              <li><span style={{ color: "var(--ink)", fontWeight: 500 }}>Retrospective setting.</span> Whole-dataset client aggregates, with test labels never used, added step by step on top of M1.</li>
             </ol>
           </Reveal>
         </section>
@@ -363,12 +586,13 @@ export function Results() {
         )}
 
         {models.data?.delayed && <Delayed data={models.data.delayed} />}
+        {models.data?.delayed && <Attribution data={models.data.delayed} />}
 
         {/* ------------------------------------------------------- axes */}
         {axes.data && (
           <section style={{ paddingBottom: 20 }}>
             <Head
-              index="04"
+              index="05"
               title={<>Ring <em>ranking</em>.</>}
               blurb={`Fraud clients found in the top ${axes.data.k} rings, relative to the number expected from ring size alone (1.00×). Burst share ranks best.`}
             />
@@ -421,20 +645,21 @@ export function Results() {
                   })}
               </div>
             </Reveal>
+            <RingEvidence />
           </section>
         )}
 
         {/* -------------------------------------------- operating point */}
         {sweep.isError && (
           <section style={{ padding: "76px 0 0" }}>
-            <Head index="05" title={<>Pick an <em>operating point</em>.</>} blurb="No prediction table for this model — the threshold sweep is unavailable." />
+            <Head index="06" title={<>Pick an <em>operating point</em>.</>} blurb="No prediction table for this model — the threshold sweep is unavailable." />
           </section>
         )}
 
         {operating && sweep.data && (
           <section style={{ padding: "76px 0 0" }}>
             <Head
-              index="05"
+              index="06"
               title={<>Pick an <em>operating point</em>.</>}
               blurb="Drag the threshold. Everything below recolours with it: the filled region is the part of the curve you are buying, and the pale region is what you are giving up."
             />

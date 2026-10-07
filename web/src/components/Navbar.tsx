@@ -5,7 +5,7 @@ import { Mark } from "./Mark";
 const ITEMS: { to: Route; label: string; hint: string }[] = [
   { to: "/", label: "Overview", hint: "What the system looks for" },
   { to: "/explore", label: "Explore", hint: "550 candidate rings" },
-  { to: "/results", label: "Results", hint: "Did structure help?" },
+  { to: "/results", label: "Results", hint: "What helped, and by how much" },
 ];
 
 /** Floating pill navigation.

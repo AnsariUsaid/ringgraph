@@ -15,6 +15,7 @@ const SORTS = [
   { key: "density", label: "Density" },
   { key: "tightness", label: "Amount" },
   { key: "n_clients", label: "Size" },
+  { key: "outlier", label: "Outlier" },
 ];
 
 const ROW_HEIGHT = 62;
@@ -68,7 +69,7 @@ export function RingList({ sort, onSortChange }: { sort: string; onSortChange: (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: 3,
             padding: 3,
             background: "var(--paper-sunken)",

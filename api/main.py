@@ -54,7 +54,7 @@ def catalogue() -> dict[str, pd.DataFrame]:
 @lru_cache(maxsize=1)
 def model_reports() -> dict[str, Any]:
     out: dict[str, Any] = {}
-    for name in ("multiseed_m1_vs_m2", "multiseed_m1_vs_m2_community", "m1_tuned_metrics", "headline"):
+    for name in ("multiseed_m1_vs_m2", "multiseed_m1_vs_m2_community", "m1_tuned_metrics", "headline", "ring_summary", "shap_graph_d30"):
         path = paths.report_path(f"{name}.json")
         if path.exists():
             out[name] = json.loads(path.read_text())
@@ -93,8 +93,11 @@ def list_rings(
     rather than taking it on trust.
     """
     rings = catalogue()["rings"]
-    if sort not in {*AXES, "composite", "n_clients", "n_transactions", "burst_share"}:
+    if sort not in {*AXES, "composite", "n_clients", "n_transactions", "burst_share", "outlier"}:
         raise HTTPException(400, f"cannot sort by {sort!r}")
+    if sort == "outlier":
+        # Most extreme on any single axis (labels are never used); the composite breaks ties.
+        rings = rings.assign(outlier=rings[[f"pct_{axis}" for axis in AXES]].max(axis=1) + 1e-3 * rings["composite"])
 
     frame = rings[rings["n_clients"] >= min_clients].sort_values(sort, ascending=False)
     frame = frame.head(limit)
@@ -313,6 +316,34 @@ def metrics_models() -> dict[str, Any]:
             "which is larger than any model difference observed."
         ),
     }
+
+
+@app.get("/metrics/summary")
+def metrics_summary() -> dict[str, Any]:
+    """Headline figures the pages quote, read from committed reports rather than typed into the frontend."""
+    reports = model_reports()
+    m1 = reports.get("m1_tuned_metrics")
+    if m1 is None or "ring_summary" not in reports:
+        raise HTTPException(503, "m1_tuned_metrics / ring_summary report not built yet")
+    test = m1["metrics"]["test"]
+    return {
+        "m1": {
+            "roc_auc": test["roc_auc"],
+            "pr_auc": test["pr_auc"],
+            "tpr_1pct": test["tpr_at_fpr_1pct"],
+            "n_features": m1["n_features"],
+        },
+        "rings": reports["ring_summary"],
+    }
+
+
+@app.get("/metrics/shap")
+def metrics_shap() -> dict[str, Any]:
+    """TreeSHAP attribution for the 30-day graph model (scripts/100_shap_graph.py)."""
+    report = model_reports().get("shap_graph_d30")
+    if report is None:
+        raise HTTPException(503, "shap_graph_d30 report not built yet")
+    return report
 
 
 @app.get("/metrics/axes")

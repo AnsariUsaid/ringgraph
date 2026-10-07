@@ -67,6 +67,26 @@ function AxisBreakdown({ axes, raw }: { axes: Record<AxisName, number>; raw: Rec
   );
 }
 
+/** Most distinct clients that transacted inside one sliding window. This is the
+ *  same coincidence the synchrony axis measures, read off the ring's own events. */
+function peakCoincidence(lanes: { events: { t: number }[] }[], windowSeconds: number) {
+  const events = lanes.flatMap((lane, i) => lane.events.map((e) => ({ t: e.t, lane: i }))).sort((a, b) => a.t - b.t);
+  const inWindow = new Map<number, number>();
+  let best = { clients: 0, spanSeconds: 0 };
+  let lo = 0;
+  for (let hi = 0; hi < events.length; hi++) {
+    inWindow.set(events[hi].lane, (inWindow.get(events[hi].lane) ?? 0) + 1);
+    while (events[hi].t - events[lo].t > windowSeconds) {
+      const n = (inWindow.get(events[lo].lane) ?? 1) - 1;
+      if (n <= 0) inWindow.delete(events[lo].lane);
+      else inWindow.set(events[lo].lane, n);
+      lo++;
+    }
+    if (inWindow.size > best.clients) best = { clients: inWindow.size, spanSeconds: events[hi].t - events[lo].t };
+  }
+  return best;
+}
+
 export function EvidencePanel() {
   const ringId = useSelection((s) => s.ringId);
   const focusedAttribute = useSelection((s) => s.focusedAttribute);
@@ -98,6 +118,7 @@ export function EvidencePanel() {
 
   const ring = detail.data;
   const hours = timeline.data ? (timeline.data.t_max - timeline.data.t_min) / 3600 : null;
+  const peak = timeline.data ? peakCoincidence(timeline.data.lanes, 3600) : null;
 
   return (
     <div className="scroll" style={{ height: "100%" }}>
@@ -131,6 +152,17 @@ export function EvidencePanel() {
             </>
           )}
           .
+          {peak && peak.clients >= 2 && (
+            <>
+              {" "}
+              Peak: <span className="mono" style={{ color: "var(--ink)" }}>{peak.clients}</span> of {ring.n_clients} clients
+              transacted within{" "}
+              <span className="mono" style={{ color: "var(--ink)" }}>
+                {peak.spanSeconds < 120 ? `${Math.max(1, Math.round(peak.spanSeconds))}s` : peak.spanSeconds < 7200 ? `${Math.round(peak.spanSeconds / 60)} min` : `${(peak.spanSeconds / 3600).toFixed(1)}h`}
+              </span>{" "}
+              of each other.
+            </>
+          )}
           {ring.n_fraud_clients > 0 && (
             <span style={{ color: "var(--risk-4)", fontWeight: 500 }}>
               {" "}

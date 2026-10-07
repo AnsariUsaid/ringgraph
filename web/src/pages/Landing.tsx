@@ -89,6 +89,13 @@ function SectionHead({ index, title, blurb }: { index: string; title: React.Reac
 export function Landing() {
   const rings = useQuery({ queryKey: queryKeys.rings("burst_share"), queryFn: () => api.rings("burst_share", 6) });
   const axes = useQuery({ queryKey: queryKeys.axes(), queryFn: api.axes });
+  const summary = useQuery({ queryKey: queryKeys.summary(), queryFn: api.summary });
+  const models = useQuery({ queryKey: queryKeys.models(), queryFn: api.models });
+  const delayed = models.data?.delayed?.causal["30"];
+  const tprM1 = delayed?.models.m1["tpr_1pct"].mean;
+  const tprCtrl = delayed?.models.ctrl["tpr_1pct"].mean;
+  const tprGraph = delayed?.models.graph["tpr_1pct"].mean;
+  const m1Tpr = summary.data?.m1.tpr_1pct;
 
   const best = axes.data?.axes.burst_share?.enrichment;
   const composite = axes.data?.axes.composite?.enrichment;
@@ -220,9 +227,9 @@ export function Landing() {
           >
             {[
               { label: "candidate rings", value: rings.data?.total ?? 0, decimals: 0 },
-              { label: "linked clients", value: 4762, decimals: 0 },
+              { label: "linked clients", value: summary.data?.rings.n_ring_clients ?? 0, decimals: 0 },
               { label: "best axis lift", value: best ?? 0, decimals: 2, suffix: "×" },
-              { label: "test ROC-AUC", value: 0.894, decimals: 3 },
+              { label: "test ROC-AUC", value: summary.data?.m1.roc_auc ?? 0, decimals: 3 },
             ].map((stat) => (
               <div key={stat.label} style={{ background: "var(--paper-raised)", padding: "18px 16px" }}>
                 <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: "-0.03em" }}>
@@ -308,7 +315,7 @@ export function Landing() {
             index="03"
             title={
               <>
-                Three <em>findings</em>.
+                Four <em>findings</em>.
               </>
             }
           />
@@ -382,16 +389,47 @@ export function Landing() {
               {
                 n: "III",
                 title: "The transaction model catches 44% of fraud at a 1% false-positive rate.",
-                body: "A tuned LightGBM model on 431 transaction features reaches 0.894 ROC-AUC on the held-out test split. Graph snapshot and community features were also trained on top of it; all scores are on the results page.",
+                body: "A tuned LightGBM model on 431 transaction features reaches 0.894 ROC-AUC on the held-out test split. Adding features that describe only the graph's shape gave no measurable lift on top; all scores are on the results page.",
                 figure: (
                   <div style={{ width: "100%" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
                       <span style={{ color: "var(--ink-2)" }}>TPR @ 1% FPR</span>
-                      <span className="mono" style={{ fontWeight: 600 }}>44.2%</span>
+                      <span className="mono" style={{ fontWeight: 600 }}>{((m1Tpr ?? 0.442) * 100).toFixed(1)}%</span>
                     </div>
                     <div style={{ height: 8, background: "var(--paper-sunken)", borderRadius: 999, overflow: "hidden" }}>
-                      <div style={{ width: "44.2%", height: "100%", borderRadius: 999, background: "var(--risk-3)" }} />
+                      <div style={{ width: `${(m1Tpr ?? 0.442) * 100}%`, height: "100%", borderRadius: 999, background: "var(--risk-3)" }} />
                     </div>
+                  </div>
+                ),
+              },
+              {
+                n: "IV",
+                title: `Adding what the bank already knew lifts it to ${tprGraph ? (tprGraph * 100).toFixed(0) : "56"}%.`,
+                body:
+                  "Using fraud labels only once they were confirmed, one 30-day chargeback delay earlier, the graph model catches " +
+                  (tprGraph ? (tprGraph * 100).toFixed(1) : "56.0") +
+                  "% of fraud at the same 1% false-alarm rate, against " +
+                  (tprM1 ? (tprM1 * 100).toFixed(1) : "42.6") +
+                  "% for the plain model (mean of five seeds). Most of that is a client's own history, which the control already has; links between clients add about " +
+                  (tprGraph && tprCtrl ? ((tprGraph - tprCtrl) * 100).toFixed(1) : "2.7") +
+                  " points on top.",
+                figure: (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
+                    {[
+                      ["normal (M1)", tprM1 ?? 0.426, "var(--risk-0)"],
+                      ["control", tprCtrl ?? 0.538, "var(--risk-1)"],
+                      ["graph", tprGraph ?? 0.56, "var(--risk-3)"],
+                    ].map(([label, value, colour]) => (
+                      <div key={label as string}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
+                          <span style={{ color: "var(--ink-2)" }}>{label}</span>
+                          <span className="mono" style={{ fontWeight: 600 }}>{((value as number) * 100).toFixed(1)}%</span>
+                        </div>
+                        <div style={{ height: 8, background: "var(--paper-sunken)", borderRadius: 999, overflow: "hidden" }}>
+                          <div style={{ width: `${((value as number) / 0.7) * 100}%`, height: "100%", borderRadius: 999, background: colour as string, transition: "width 900ms var(--ease-out)" }} />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ),
               },
@@ -442,7 +480,7 @@ export function Landing() {
                 From raw rows to a ranked <em>catalogue</em>.
               </>
             }
-            blurb="Seven steps, in the order the repository runs them, each with the number it produced."
+            blurb="Eight steps, in the order the repository runs them, each with the number it produced."
           />
           <Pipeline />
         </section>
@@ -515,7 +553,7 @@ export function Landing() {
         >
           <Reveal>
             <h2 className="display" style={{ fontSize: "clamp(34px, 6vw, 68px)", margin: 0, color: "var(--paper)" }}>
-              550 rings are waiting.
+              {summary.data?.rings.n_rings ?? 550} rings are waiting.
               <br />
               <span style={{ opacity: 0.55 }}>Start with the one at the top.</span>
             </h2>

@@ -31,15 +31,15 @@ const STAGES: Stage[] = [
   {
     script: "40_label_homogeneity",
     title: "Check: is there a signal?",
-    body: "Before building a graph, ask whether shared attributes carry ring signal at all. Groups sharing card1 contain 650 fraud-bearing pairs against 950 expected by chance — 17 sd below the null. Hub attributes are anti-predictive, which is what caps the degree band.",
-    figure: { value: -17.5, decimals: 1, suffix: " sd", unit: "below the null, on card1" },
+    body: "Before building a graph, ask whether shared attributes carry ring signal at all. They do only once hubs are kept out. With a degree cap of 50, card1 groups holding two or more fraud clients number 650 against 950 expected by chance (−17.5 sd); capped at 10 they number 73 against 27.8. Hub attributes are anti-predictive, which is what sets the degree band.",
+    figure: { value: 10.6, decimals: 1, prefix: "+", suffix: " sd", unit: "above the null on card1, degree cap 10" },
     gate: true,
   },
   {
     script: "50_synchrony",
     title: "Check: do they coordinate?",
-    body: "Do linked clients transact in the same window more than unlinked ones? In the smallest size band, candidate components produce 88 same-window bursts against a null expectation of 0.2.",
-    figure: { value: 391, unit: "× the null burst rate" },
+    body: "Do linked clients transact in the same window more than unlinked ones? In the smallest size band, components holding fraud produce 189 same-window bursts against a null expectation of 1.25. Fraud-free components of the same size reach 46×.",
+    figure: { value: 151, unit: "× the null burst rate" },
     gate: true,
   },
   {
@@ -58,7 +58,13 @@ const STAGES: Stage[] = [
     script: "91_multiseed",
     title: "Train",
     body: "A tuned LightGBM model on transaction features, then the same model with graph snapshot and community features added. Each trained on five seeds and scored as TPR at 1% FPR on the test split.",
-    figure: { value: 44.2, decimals: 1, suffix: "%", unit: "TPR at 1% FPR" },
+    figure: { value: 44.2, decimals: 1, suffix: "%", unit: "TPR at 1% FPR (committed run; 5-seed mean 42.6%)" },
+  },
+  {
+    script: "93_graph_sweep",
+    title: "Add what the bank knew",
+    body: "A fraud label may be used for a payment only once it was confirmed, one chargeback delay earlier. M1 gets the client's own history (the control), then links between clients (the graph). Most of the lift is own history; the graph adds a smaller gain that is significant at short delays.",
+    figure: { value: 56.0, decimals: 1, suffix: "%", unit: "TPR at 1% FPR, graph at 30d (M1 42.6%)" },
   },
 ];
 

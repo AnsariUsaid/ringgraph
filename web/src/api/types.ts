@@ -170,3 +170,39 @@ export interface SweepResponse {
   positives: number;
   sweep: SweepPoint[];
 }
+
+export interface Summary {
+  m1: { roc_auc: number; pr_auc: number; tpr_1pct: number; n_features: number };
+  rings: {
+    n_rings: number;
+    n_ring_clients: number;
+    n_ring_fraud_clients: number;
+    ring_client_fraud_rate: number;
+    base_client_fraud_rate: number;
+    ring_txn_fraud_rate: number;
+    base_txn_fraud_rate: number;
+    rings_with_fraud: number;
+    rings_multi_fraud: number;
+    rings_all_fraud: number;
+    rings_no_fraud: number;
+    fraud_clients_in_multi_fraud_rings: number;
+  };
+}
+
+export interface ShapExample {
+  test_row: number;
+  score: number;
+  m1_score: number;
+  top_features: { feature: string; family: string; shap: number }[];
+}
+
+export interface ShapReport {
+  delay_days: number;
+  flagged: number;
+  frauds_caught: number;
+  caught_only_by_graph: number;
+  family_share_all_flagged: Record<string, number>;
+  family_share_caught_only_by_graph: Record<string, number>;
+  top_features_caught_only_by_graph: { feature: string; family: string; mean_abs_shap: number }[];
+  examples: ShapExample[];
+}

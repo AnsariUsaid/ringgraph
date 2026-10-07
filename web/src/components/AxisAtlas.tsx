@@ -32,7 +32,7 @@ const SPECS: Record<AxisName, AxisSpec> = {
     question: "Did they move at the same moment?",
     definition:
       "How concentrated the ring's transactions are in time, measured against what a ring of that size would produce by chance.",
-    formula: "max transactions in a 1h window / total",
+    formula: "(coincident pairs in 1h + 1) / (same, time-shifted null + 1)",
     fires: "Scripted cash-out. It draws a vertical wall in the event raster.",
     blind: "A patient farm that spreads the same behaviour over weeks.",
   },
@@ -42,7 +42,7 @@ const SPECS: Record<AxisName, AxisSpec> = {
     question: "How few attributes carry the whole group?",
     definition:
       "How much of the ring's linkage rests on its single most-shared attribute. One fingerprint holding twelve accounts is a different object from twelve accounts with a browser in common.",
-    formula: "max attribute degree / n clients",
+    formula: "n clients / distinct shared attribute values",
     fires: "A single device fingerprint doing all the connecting.",
     blind: "Popular attributes. A common browser string scores high and means nothing.",
   },
@@ -52,7 +52,7 @@ const SPECS: Record<AxisName, AxisSpec> = {
     question: "Do the amounts repeat?",
     definition:
       "The spread of transaction values inside the ring, inverted, so that a ring which reuses one number scores high.",
-    formula: "1 − (sd of amount / mean amount)",
+    formula: "1 / (1 + sd of amount / mean amount)",
     fires: "A script that picks a figure and reuses it. The top ring is five clients, five transactions, $25 each.",
     blind: "An operator who varies amounts on purpose.",
   },
@@ -201,7 +201,7 @@ function Figure({ axis }: { axis: AxisName }) {
         />
       ))}
       <text x={0} y={180} fontSize={11} fill="var(--ink-3)">
-        seven at $25 · one outlier
+        illustration: repeated amounts, one breaks the pattern
       </text>
     </svg>
   );

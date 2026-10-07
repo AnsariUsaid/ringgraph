@@ -3,7 +3,9 @@ import type {
   ModelMetrics,
   RingDetail,
   RingListResponse,
+  ShapReport,
   SubgraphResponse,
+  Summary,
   SweepResponse,
   TimelineResponse,
 } from "./types";
@@ -34,6 +36,8 @@ export const api = {
   timeline: (id: number) => get<TimelineResponse>(`/rings/${id}/events`),
   models: () => get<ModelMetrics>("/metrics/models"),
   axes: () => get<AxisPerformance>("/metrics/axes"),
+  summary: () => get<Summary>("/metrics/summary"),
+  shap: () => get<ShapReport>("/metrics/shap"),
   sweep: (model = "m1_tuned") => get<SweepResponse>(`/metrics/sweep?model=${model}&points=400`),
 };
 
@@ -44,5 +48,7 @@ export const queryKeys = {
   timeline: (id: number) => ["ring", id, "timeline"] as const,
   models: () => ["metrics", "models"] as const,
   axes: () => ["metrics", "axes"] as const,
+  summary: () => ["metrics", "summary"] as const,
+  shap: () => ["metrics", "shap"] as const,
   sweep: (model: string) => ["metrics", "sweep", model] as const,
 };

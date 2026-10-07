@@ -25,7 +25,7 @@ from fds import paths, schema
 from fds.artifacts import read_parquet
 from fds.cli import base_parser, record_run, resolve
 from fds.config import load_config
-from fds.evaluation import evaluate, paired_bootstrap_difference
+from fds.evaluation import dollars_and_precision, evaluate, paired_bootstrap_difference
 from fds.features import categorical_columns, split_frames, tabular_feature_columns
 from fds.ingest import load_base
 from fds.models import train_seed_sweep
@@ -38,20 +38,6 @@ ALPHAS = (1.0, 0.75, 0.5, 0.25, 0.0)
 
 def table_columns(path, prefixes: tuple[str, ...]) -> list[str]:
     return [c for c in pq.read_schema(path).names if c.startswith(prefixes)]
-
-
-def dollars_and_precision(y, amount, score, fpr=0.01):
-    """At the threshold giving ``fpr`` false-positive rate: share of fraud dollars caught, precision, alerts."""
-    neg = np.sort(score[y == 0])
-    thr = neg[int(np.ceil(len(neg) * (1 - fpr))) - 1]
-    flag = score > thr
-    tp = int((flag & (y == 1)).sum())
-    return {
-        "dollar_recall": float(amount[flag & (y == 1)].sum() / amount[y == 1].sum()),
-        "precision": tp / max(int(flag.sum()), 1),
-        "alerts": int(flag.sum()),
-        "frauds_caught": tp,
-    }
 
 
 def main() -> None:
@@ -74,7 +60,6 @@ def main() -> None:
         "relfeat": (paths.relfeat_path(recipe), (f"rl{d}_", f"rp{d}_", "rs_")),
         "offline": (paths.DATA_ROOT / "offline" / f"recipe={recipe}" / "offline.parquet", (FE_PREFIX, AGG_PREFIX, GRAPH_PREFIX)),
         "profile": (paths.DATA_ROOT / "profile" / f"recipe={recipe}" / "profile.parquet", ("cp_",)),
-        "risk": (paths.DATA_ROOT / "riskfeat" / f"recipe={recipe}" / "riskfeat.parquet", ("rq_",)),
     }
     df = base
     for name, (path, prefixes) in sources.items():
@@ -90,7 +75,7 @@ def main() -> None:
 
     l1 = m1 + cols(FE_PREFIX, AGG_PREFIX)
     l2 = l1 + cols(f"lfc{d}_")
-    l3 = l2 + cols(GRAPH_PREFIX, f"lfg{d}_", f"lfa{d}_", f"rl{d}_", f"rp{d}_", "rs_", "cp_", "rq_")
+    l3 = l2 + cols(GRAPH_PREFIX, f"lfg{d}_", f"lfa{d}_", f"rl{d}_", f"rp{d}_", "rs_", "cp_")
     ladder = {"L0": m1, "L1": l1, "L2": l2, "L3": l3}
     schema.assert_no_denied_features(l3)
     print({k: len(v) for k, v in ladder.items()}, flush=True)

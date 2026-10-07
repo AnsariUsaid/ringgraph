@@ -135,3 +135,19 @@ def mcnemar(y_true: np.ndarray, pred_a: np.ndarray, pred_b: np.ndarray) -> dict[
         "a_only": a_only,
         "p_value": float(binomtest(b_only, discordant, 0.5).pvalue),
     }
+
+
+def dollars_and_precision(
+    y_true: np.ndarray, amount: np.ndarray, y_score: np.ndarray, fpr: float = 0.01
+) -> dict[str, float]:
+    """At the threshold that gives ``fpr``: share of fraud *dollars* caught, precision, alert count."""
+    negatives = np.sort(y_score[y_true == 0])
+    threshold = negatives[int(np.ceil(len(negatives) * (1 - fpr))) - 1]
+    flagged = y_score > threshold
+    caught = flagged & (y_true == 1)
+    return {
+        "dollar_recall": float(amount[caught].sum() / amount[y_true == 1].sum()),
+        "precision": float(caught.sum() / max(int(flagged.sum()), 1)),
+        "alerts": int(flagged.sum()),
+        "frauds_caught": int(caught.sum()),
+    }
